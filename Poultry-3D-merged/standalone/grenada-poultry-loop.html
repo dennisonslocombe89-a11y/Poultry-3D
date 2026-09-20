@@ -1,0 +1,3423 @@
+<title>Grenada Poultry Loop</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=Work+Sans:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap">
+<style>
+  :root{
+    --ink-900:#0c1e17;
+    --ink-800:#122a20;
+    --ink-700:#1c3c2d;
+    --ink-600:#284a38;
+    --cream:#f1ecda;
+    --cream-dim:#c9c3ab;
+    --gold:#e3a93a;
+    --terracotta:#c0603a;
+    --teal:#4fa697;
+    --leaf:#8bbf6f;
+    --amber:#d98a3d;
+    --line:#2a4636;
+    --radius:14px;
+    --font-display:'Bricolage Grotesque', 'Work Sans', sans-serif;
+    --font-body:'Work Sans', sans-serif;
+    --font-mono:'Space Mono', monospace;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background:var(--ink-900);
+    color:var(--cream);
+    font-family:var(--font-body);
+    overflow:hidden;
+  }
+
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
+
+  .app{
+    height:100%;
+    display:flex;
+    flex-direction:column;
+    padding-inline:16px;
+    padding-block:12px;
+    gap:10px;
+  }
+
+  /* ---------- header ---------- */
+  header.topbar{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:16px;
+    flex-wrap:wrap;
+  }
+  .titleblock{min-width:0;}
+  .eyebrow{
+    font-family:var(--font-mono);
+    font-size:11px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--gold);
+    margin:0 0 4px;
+  }
+  h1{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:clamp(20px,4vw,28px);
+    line-height:1.1;
+    margin:0 0 4px;
+    text-wrap:balance;
+  }
+  .subtitle{
+    margin:0;
+    font-size:13px;
+    color:var(--cream-dim);
+    max-width:58ch;
+  }
+  .header-actions{
+    display:flex;
+    gap:8px;
+    flex-shrink:0;
+    flex-wrap:wrap;
+  }
+  button.pill{
+    font-family:var(--font-body);
+    font-weight:600;
+    font-size:12.5px;
+    color:var(--cream);
+    background:var(--ink-700);
+    border:1px solid var(--line);
+    border-radius:999px;
+    padding:9px 15px;
+    cursor:pointer;
+    white-space:nowrap;
+    transition:background .15s ease, border-color .15s ease;
+  }
+  button.pill:hover{background:var(--ink-600); border-color:var(--teal);}
+  button.pill:focus-visible{outline:2px solid var(--gold); outline-offset:2px;}
+  button.pill.active{background:var(--teal); color:var(--ink-900); border-color:var(--teal);}
+  .view-toggle{display:flex; gap:6px;}
+
+  /* ---------- category filter row ---------- */
+  .filter-row{
+    display:flex;
+    gap:6px;
+    flex-wrap:wrap;
+    overflow-x:auto;
+    padding-bottom:2px;
+  }
+  .chip{
+    font-family:var(--font-body);
+    font-size:12px;
+    font-weight:600;
+    color:var(--cream-dim);
+    background:var(--ink-800);
+    border:1px solid var(--line);
+    border-radius:999px;
+    padding:6px 13px;
+    cursor:pointer;
+    white-space:nowrap;
+    transition:background .15s ease, color .15s ease, border-color .15s ease;
+  }
+  .chip:hover{border-color:var(--teal); color:var(--cream);}
+  .chip:focus-visible{outline:2px solid var(--gold); outline-offset:2px;}
+  .chip.active{background:var(--ink-600); border-color:var(--gold); color:var(--cream);}
+
+  /* ---------- stage ---------- */
+  main.stage{
+    position:relative;
+    flex:1;
+    min-height:0;
+    display:flex;
+    gap:10px;
+    border-radius:var(--radius);
+    overflow:hidden;
+  }
+  #canvas-wrap{
+    position:relative;
+    flex:1;
+    min-width:0;
+    min-height:200px;
+    border-radius:var(--radius);
+    overflow:hidden;
+    background:linear-gradient(180deg,#bfe3ea 0%,#dff0d8 58%,#e8f2d9 100%);
+  }
+  #canvas-wrap canvas{position:absolute; inset:0; display:block; width:100%; height:100%;}
+
+  #diagram-wrap{position:absolute; inset:0; display:none; align-items:center; justify-content:center; background:var(--ink-900); overflow:hidden;}
+  #diagram-wrap.active{display:flex;}
+  #diagram-wrap svg{width:100%; height:100%; max-width:720px; max-height:720px;}
+  .diagram-hint{position:absolute; left:14px; top:14px; font-family:var(--font-mono); font-size:11px; color:var(--cream-dim); background:rgba(255,255,255,.08); border-radius:999px; padding:6px 12px; pointer-events:none;}
+  .diagram-node{cursor:pointer;}
+  .diagram-node .node-ring{transition:stroke .15s ease, stroke-width .15s ease;}
+  .diagram-node .node-label{transition:fill .15s ease;}
+  .diagram-node.dimmed{opacity:.28;}
+  .diagram-node.selected .node-ring{stroke-width:3;}
+  .diagram-edge{transition:opacity .2s ease, stroke-width .2s ease;}
+  .diagram-edge.dimmed{opacity:.1;}
+
+  /* ---------- Grenada network view ---------- */
+  #network-wrap{position:absolute; inset:0; display:none; overflow:hidden;
+    background:radial-gradient(120% 100% at 30% 15%, #17434c 0%, #0f2f37 55%, #0a2027 100%);}
+  #network-wrap.active{display:block;}
+  #network-wrap > svg{position:absolute; inset:0; width:100%; height:100%;}
+  .net-layers{position:absolute; left:14px; top:14px; display:flex; gap:6px; flex-wrap:wrap; max-width:calc(100% - 28px);}
+  .net-note{position:absolute; right:14px; bottom:12px; width:max-content; max-width:min(330px, calc(100% - 28px));
+    font-family:var(--font-mono); font-size:10px; line-height:1.4; color:var(--cream-dim); text-align:left;
+    background:rgba(8,24,29,.72); border-radius:10px; padding:7px 12px; pointer-events:none;}
+  .net-learning{position:absolute; left:14px; top:56px; width:min(272px, calc(100% - 28px)); max-height:calc(100% - 120px); overflow-y:auto;
+    background:var(--ink-800); border:1px solid var(--line); border-radius:var(--radius); padding:14px; box-shadow:0 12px 30px rgba(0,0,0,.35);}
+  .net-learning[hidden]{display:none;}
+  .net-learning h3{font-family:var(--font-display); font-size:14px; margin:0 0 2px;}
+  .net-learning .grant-ref{font-family:var(--font-mono); font-size:10px; color:var(--gold); margin:0 0 10px;}
+  .net-learning ol{margin:10px 0 0; padding:0; list-style:none; counter-reset:step;}
+  .net-learning li{position:relative; padding:0 0 9px 26px; font-size:11.5px; line-height:1.4; color:var(--cream-dim);}
+  .net-learning li::before{counter-increment:step; content:counter(step); position:absolute; left:0; top:0; width:18px; height:18px; border-radius:50%;
+    background:#8f7fd1; color:#0c1e17; font-family:var(--font-mono); font-size:10px; font-weight:700; display:flex; align-items:center; justify-content:center;}
+  .net-learning li b{color:var(--cream);}
+  .net-learning .stat-grid{margin-top:2px;}
+  .net-caveat{font-size:10.5px; color:var(--gold); margin:8px 0 0; line-height:1.4;}
+  .net-node{cursor:pointer;}
+  .net-node:focus-visible .net-ring{stroke:#f1ecda; stroke-width:3;}
+  .net-node .net-ring{transition:stroke-width .15s ease;}
+  .net-node.selected .net-ring{stroke-width:3.5; stroke:#f1ecda;}
+  .net-node.dim, .net-link.dim, .net-label.dim{opacity:.1; pointer-events:none;}
+  .net-link{fill:none; stroke-linecap:round;}
+  @keyframes netflow{to{stroke-dashoffset:-28;}}
+  .net-link.flow{animation:netflow 1.8s linear infinite;}
+  @media (prefers-reduced-motion:reduce){ .net-link.flow{animation:none;} }
+  body.mode-network .legend-rail, body.mode-network .filter-row{display:none;}
+
+  .hint{
+    position:absolute;
+    left:14px;
+    top:14px;
+    font-family:var(--font-mono);
+    font-size:11px;
+    color:#28321f;
+    background:rgba(255,255,255,.72);
+    border-radius:999px;
+    padding:6px 12px;
+    pointer-events:none;
+    transition:opacity .6s ease;
+  }
+  .hint[hidden]{display:none;}
+
+  .compass{
+    position:absolute;
+    top:14px;
+    right:14px;
+    width:38px;
+    height:38px;
+    border-radius:50%;
+    background:rgba(255,255,255,.78);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    pointer-events:none;
+  }
+  .compass-arrow{
+    font-family:var(--font-mono);
+    font-weight:700;
+    font-size:12px;
+    color:#28321f;
+    transition:transform .05s linear;
+  }
+
+  /* legend rail */
+  .legend-rail{
+    width:216px;
+    flex-shrink:0;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    overflow-y:auto;
+    padding-right:2px;
+  }
+  .legend-item{
+    display:flex;
+    align-items:center;
+    gap:9px;
+    width:100%;
+    text-align:left;
+    font-family:var(--font-body);
+    font-size:13px;
+    font-weight:500;
+    color:var(--cream-dim);
+    background:var(--ink-800);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:9px 11px;
+    cursor:pointer;
+    transition:background .15s ease, color .15s ease, border-color .15s ease;
+  }
+  .legend-item:hover{border-color:var(--teal); color:var(--cream);}
+  .legend-item:focus-visible{outline:2px solid var(--gold); outline-offset:2px;}
+  .legend-item.selected{background:var(--ink-600); color:var(--cream); border-color:var(--gold);}
+  .legend-item[hidden]{display:none;}
+  .legend-dot{width:9px; height:9px; border-radius:50%; flex-shrink:0;}
+  .legend-item .li-tag{
+    margin-left:auto;
+    font-family:var(--font-mono);
+    font-size:9.5px;
+    letter-spacing:.04em;
+    text-transform:uppercase;
+    color:var(--cream-dim);
+    opacity:.7;
+  }
+
+  /* provenance badges */
+  .badge{
+    font-family:var(--font-mono);
+    font-size:9px;
+    letter-spacing:.04em;
+    text-transform:uppercase;
+    padding:2px 7px;
+    border-radius:999px;
+    display:inline-block;
+    white-space:nowrap;
+  }
+  .badge-confirmed{background:rgba(139,191,111,.18); color:var(--leaf); border:1px solid rgba(139,191,111,.4);}
+  .badge-proposed{background:rgba(227,169,58,.14); color:var(--gold); border:1px dashed rgba(227,169,58,.6);}
+
+  /* info card */
+  #info-card{
+    position:absolute;
+    right:14px;
+    bottom:14px;
+    width:min(340px, calc(100% - 28px));
+    max-height:calc(100% - 28px);
+    overflow-y:auto;
+    background:var(--ink-800);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:16px 16px 14px;
+    box-shadow:0 12px 30px rgba(0,0,0,.35);
+  }
+  #info-card[hidden]{display:none;}
+  .info-top{display:flex; align-items:flex-start; justify-content:space-between; gap:10px;}
+  .info-top-actions{display:flex; align-items:center; gap:6px; flex-shrink:0;}
+  .info-voice-btn{
+    background:none;
+    border:1px solid var(--line);
+    color:var(--cream-dim);
+    font-family:var(--font-mono);
+    font-size:10px;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    border-radius:999px;
+    padding:4px 10px;
+    cursor:pointer;
+  }
+  .info-voice-btn:hover{color:var(--cream); border-color:var(--teal);}
+  .info-voice-btn:focus-visible{outline:2px solid var(--gold); outline-offset:2px;}
+  .info-voice-btn.active{background:var(--teal); color:var(--ink-900); border-color:var(--teal);}
+  .info-tag{
+    display:inline-block;
+    font-family:var(--font-mono);
+    font-size:10px;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    padding:3px 8px;
+    border-radius:999px;
+    margin-bottom:8px;
+  }
+  .info-badge-row{display:flex; align-items:center; gap:6px; margin:0 0 8px; flex-wrap:wrap;}
+  .info-activity{font-family:var(--font-mono); font-size:9.5px; color:var(--cream-dim); letter-spacing:.04em;}
+  #info-card h2{
+    font-family:var(--font-display);
+    font-size:17px;
+    font-weight:700;
+    margin:0 0 6px;
+    line-height:1.2;
+  }
+  #info-card p{
+    margin:0;
+    font-size:13px;
+    line-height:1.5;
+    color:var(--cream-dim);
+  }
+  .info-photos{
+    margin:12px 0 0;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:6px;
+  }
+  .info-photos:empty{display:none;}
+  .info-photo{
+    position:relative;
+    aspect-ratio:4/3;
+    border-radius:8px;
+    overflow:hidden;
+    border:1px solid var(--line);
+    cursor:pointer;
+    background:var(--ink-900);
+    padding:0;
+  }
+  .info-photo img{width:100%; height:100%; object-fit:cover; display:block;}
+  .info-photo.photo-error img{display:none;}
+  .info-photo.photo-error::before{
+    content:'Photo unavailable';
+    position:absolute; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    text-align:center; padding:8px;
+    font-family:var(--font-mono); font-size:10px; color:var(--cream-dim);
+  }
+  .info-photo .photo-tag{
+    position:absolute;
+    left:4px; right:4px; bottom:4px;
+    font-family:var(--font-mono);
+    font-size:8px;
+    line-height:1.3;
+    color:var(--cream);
+    background:rgba(12,30,23,.78);
+    padding:2px 5px;
+    border-radius:5px;
+  }
+  .info-photo:focus-visible{outline:2px solid var(--gold); outline-offset:2px;}
+
+  #lightbox{position:fixed; inset:0; background:rgba(0,0,0,.85); display:flex; align-items:center; justify-content:center; padding:20px; z-index:200;}
+  #lightbox[hidden]{display:none;}
+  #lightbox-inner{position:relative; max-width:720px; width:100%; background:var(--ink-800); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; box-shadow:0 20px 50px rgba(0,0,0,.5);}
+  #lightbox-img{width:100%; max-height:60vh; object-fit:contain; display:block; background:var(--ink-900);}
+  #lightbox-caption{margin:0; padding:14px 16px; font-size:12.5px; color:var(--cream-dim); line-height:1.5;}
+  #lightbox-close{
+    position:absolute; top:10px; right:10px;
+    background:rgba(0,0,0,.55);
+    color:var(--cream);
+    border:none;
+    border-radius:50%;
+    width:30px; height:30px;
+    font-size:18px;
+    line-height:1;
+    cursor:pointer;
+  }
+  #lightbox-close:hover{background:rgba(0,0,0,.8);}
+  #lightbox-close:focus-visible{outline:2px solid var(--gold); outline-offset:2px;}
+
+  .info-facts{
+    margin:12px 0 0;
+    display:grid;
+    grid-template-columns:auto 1fr;
+    gap:5px 10px;
+    font-size:12px;
+  }
+  .info-facts dt{
+    color:var(--cream-dim);
+    font-family:var(--font-mono);
+    font-size:9.5px;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    padding-top:2px;
+    white-space:nowrap;
+  }
+  .info-facts dd{margin:0; color:var(--cream); line-height:1.4;}
+  .info-close{
+    background:none;
+    border:none;
+    color:var(--cream-dim);
+    font-size:18px;
+    line-height:1;
+    cursor:pointer;
+    padding:2px 4px;
+    flex-shrink:0;
+  }
+  .info-close:hover{color:var(--cream);}
+  .info-close:focus-visible{outline:2px solid var(--gold); outline-offset:2px;}
+
+  /* left drawer (project facts / flows) */
+  .left-drawer{
+    position:absolute;
+    left:14px;
+    bottom:14px;
+    width:min(300px, calc(100% - 28px));
+    max-height:calc(100% - 28px);
+    overflow-y:auto;
+    background:var(--ink-800);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:16px;
+    box-shadow:0 12px 30px rgba(0,0,0,.35);
+  }
+  .left-drawer[hidden]{display:none;}
+  .left-drawer h3{
+    font-family:var(--font-display);
+    font-size:14px;
+    margin:0 0 3px;
+  }
+  .left-drawer .grant-ref{
+    font-family:var(--font-mono);
+    font-size:10.5px;
+    color:var(--gold);
+    margin:0 0 12px;
+  }
+  .stat-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+  }
+  .stat{border-top:1px solid var(--line); padding-top:7px;}
+  .stat b{
+    display:block;
+    font-family:var(--font-mono);
+    font-size:16px;
+    color:var(--leaf);
+    font-variant-numeric:tabular-nums;
+  }
+  .stat span{font-size:11px; color:var(--cream-dim);}
+  .method-note{font-size:11px; color:var(--cream-dim); margin-top:12px; line-height:1.5;}
+  .link-btn{background:none; border:none; color:var(--teal); text-decoration:underline; font:inherit; cursor:pointer; padding:0;}
+  .link-btn:focus-visible{outline:2px solid var(--gold); outline-offset:2px;}
+  .method-detail{font-size:11px; color:var(--cream-dim); margin-top:8px; line-height:1.5;}
+  .method-detail[hidden]{display:none;}
+
+  .flow-row{display:flex; align-items:center; gap:8px; padding:6px 0; font-size:12.5px; border-top:1px solid var(--line);}
+  .flow-row:first-of-type{border-top:none;}
+  .flow-row input{accent-color:var(--teal); flex-shrink:0;}
+  .flow-row input:focus-visible{outline:2px solid var(--gold); outline-offset:2px;}
+  .flow-swatch{width:10px; height:10px; border-radius:50%; flex-shrink:0;}
+  .flow-row .flow-label{flex:1;}
+
+  #interior-zone-list{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(220px,1fr));
+    gap:2px 20px;
+    max-height:190px;
+    overflow-y:auto;
+    padding-right:4px;
+  }
+  .zone-row{display:flex; gap:8px; padding:7px 0; border-top:1px solid var(--line); align-items:flex-start;}
+  .zone-row:first-of-type{border-top:none;}
+  .zone-swatch{width:10px; height:10px; border-radius:50%; flex-shrink:0; margin-top:4px;}
+  .zone-text b{display:block; font-size:12.5px; color:var(--cream);}
+  .zone-text span{display:block; font-size:11.5px; color:var(--cream-dim); margin-top:1px; line-height:1.4;}
+
+  /* ---------- story mode ---------- */
+  .story-bar{
+    background:var(--ink-800);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:14px 16px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  .story-bar[hidden]{display:none;}
+  .story-progress{display:flex; gap:5px;}
+  .story-dot{width:8px; height:8px; border-radius:50%; background:var(--line); flex-shrink:0;}
+  .story-dot.done{background:var(--leaf);}
+  .story-dot.current{background:var(--gold);}
+  .story-eyebrow{
+    margin:0 0 4px;
+    font-family:var(--font-mono);
+    font-size:10.5px;
+    letter-spacing:.04em;
+    text-transform:uppercase;
+    color:var(--gold);
+  }
+  #story-step-title{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:15px;
+    margin:0 0 4px;
+  }
+  #story-step-text{margin:0; font-size:13px; line-height:1.5; color:var(--cream-dim); max-width:72ch;}
+  .story-nav{display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
+  .story-nav[hidden]{display:none;}
+  .story-nav button[disabled]{opacity:.4; cursor:not-allowed;}
+  .story-paused-note{font-size:12.5px; color:var(--gold); margin:0;}
+
+  /* responsive: narrow */
+  @media (max-width:760px){
+    .app{padding-inline:10px;}
+    main.stage{flex-direction:column;}
+    .legend-rail{
+      width:100%;
+      height:58px;
+      flex-direction:row;
+      overflow-x:auto;
+      overflow-y:hidden;
+    }
+    .legend-item{flex-shrink:0;}
+    .legend-item .li-tag{display:none;}
+    .left-drawer, #info-card{
+      left:8px; right:8px; width:auto; bottom:8px;
+    }
+    .subtitle{display:none;}
+  }
+</style>
+
+<div class="app">
+  <header class="topbar">
+    <div class="titleblock">
+      <p class="eyebrow">GCLL &middot; EUCaN Grant No. 700001756-01-04</p>
+      <h1>Scaling Circular Poultry Cooperatives</h1>
+      <p class="subtitle">An interactive model of the circular-economy system piloted across Grenada, Carriacou &amp; Petite Martinique &mdash; drag to orbit, tap a building to learn what it does, filter by category or isolate a flow.</p>
+    </div>
+    <div class="header-actions">
+      <div class="view-toggle" id="view-toggle" role="group" aria-label="Switch view">
+        <button class="pill active" id="view-3d-btn" aria-pressed="true">3D view</button>
+        <button class="pill" id="view-diagram-btn" aria-pressed="false">Loop diagram</button>
+        <button class="pill" id="view-network-btn" aria-pressed="false">Grenada network</button>
+      </div>
+      <button class="pill" id="story-btn" aria-pressed="false">Story Mode</button>
+      <button class="pill" id="flows-btn" aria-pressed="false">Flows</button>
+      <button class="pill" id="stats-btn" aria-pressed="false">Project facts</button>
+      <button class="pill" id="reset-btn">Reset view</button>
+    </div>
+  </header>
+
+  <div class="filter-row" id="filter-row" role="group" aria-label="Filter components by category"></div>
+
+  <div class="story-bar" id="story-bar" hidden>
+    <div class="story-progress" id="story-progress" aria-hidden="true"></div>
+    <div>
+      <p class="story-eyebrow">Step <span id="story-step-num">1</span> of <span id="story-step-total">8</span></p>
+      <h3 id="story-step-title"></h3>
+      <p id="story-step-text"></p>
+      <p class="story-paused-note" id="story-paused-note" hidden>Paused &mdash; you moved the camera. Resume when ready.</p>
+    </div>
+    <div class="story-nav" id="story-nav-row">
+      <button class="pill" id="story-back">Back</button>
+      <button class="pill active" id="story-next">Next</button>
+      <button class="pill" id="story-exit">Exit story</button>
+    </div>
+    <div class="story-nav" id="story-resume-row" hidden>
+      <button class="pill active" id="story-resume">Resume story</button>
+      <button class="pill" id="story-exit-2">Exit story</button>
+    </div>
+  </div>
+
+  <div class="story-bar" id="interior-bar" hidden>
+    <div>
+      <p class="story-eyebrow" id="interior-eyebrow">Interior view</p>
+      <h3 id="interior-title"></h3>
+      <p id="interior-note"></p>
+    </div>
+    <div id="interior-zone-list"></div>
+    <div class="story-nav">
+      <button class="pill active" id="interior-exit">Exit interior</button>
+    </div>
+  </div>
+
+  <main class="stage">
+    <div id="canvas-wrap">
+      <div id="diagram-wrap" aria-hidden="true">
+        <p class="diagram-hint">Simplified 2D view &middot; tap a node to open its details</p>
+      </div>
+      <div id="network-wrap" aria-hidden="true">
+        <div class="net-layers" id="net-layers" role="group" aria-label="Network layers"></div>
+        <div class="net-learning" id="net-learning" hidden>
+          <h3>Learning pathway</h3>
+          <p class="grant-ref">Activity A2 &middot; contract 700001756-01-04</p>
+          <div class="stat-grid">
+            <div class="stat"><b>10</b><span>trainings</span></div>
+            <div class="stat"><b>45</b><span>demonstration sessions</span></div>
+            <div class="stat"><b>10</b><span>coaching visits</span></div>
+            <div class="stat"><b>1</b><span>international study visit</span></div>
+          </div>
+          <ol>
+            <li><b>Pre-tour briefing</b> &mdash; participants agree learning objectives with the project team.</li>
+            <li><b>Study visit</b> to Cooperativa Juan XXIII, R.L., Santiago de Veraguas, Panama &mdash; biosecurity, animal health, processing, HACCP, governance.</li>
+            <li><b>Post-visit sharing</b> &mdash; participants brief the wider cooperative sector; GCLL keeps the knowledge as national hub.</li>
+            <li><b>Into the training materials</b> &mdash; lessons feed the manuals used at the 15 sites and across the 3 cooperatives.</li>
+            <li><b>Regional exchange</b> with Saint Lucia and Saint Kitts &amp; Nevis through cooperative networks.</li>
+          </ol>
+          <p class="net-caveat">The contract says six participants in one place and lists eight in another &mdash; GCLL to confirm the final delegation. The Dec 2025 study-tour report belongs to a separate grant.</p>
+        </div>
+        <p class="net-note" id="net-note">Schematic map, not to scale &middot; solid ring = named in the contract &middot; dashed ring = illustrative location, to be confirmed by GCLL</p>
+      </div>
+      <p class="hint" id="hint">drag to orbit &middot; scroll/pinch to zoom &middot; tap a building</p>
+      <div class="compass" id="compass" aria-hidden="true"><span class="compass-arrow" id="compass-arrow">N</span></div>
+
+      <div id="info-card" hidden>
+        <div class="info-top">
+          <div>
+            <span class="info-tag" id="info-tag"></span>
+          </div>
+          <div class="info-top-actions">
+            <button class="info-voice-btn" id="info-voice-btn" aria-pressed="false">Listen</button>
+            <button class="info-close" id="info-close" aria-label="Close">&times;</button>
+          </div>
+        </div>
+        <div class="info-badge-row">
+          <span class="badge" id="info-badge"></span>
+          <span class="info-activity" id="info-activity"></span>
+        </div>
+        <h2 id="info-title"></h2>
+        <p id="info-desc"></p>
+        <div class="info-photos" id="info-photos"></div>
+        <dl class="info-facts">
+          <dt id="info-dt-1">Inputs</dt><dd id="info-inputs"></dd>
+          <dt id="info-dt-2">Outputs</dt><dd id="info-outputs"></dd>
+          <dt id="info-dt-3">Benefits</dt><dd id="info-beneficiaries"></dd>
+        </dl>
+        <button type="button" class="pill" id="info-interior-btn" hidden style="margin-top:12px;">View interior</button>
+      </div>
+
+      <div id="lightbox" hidden>
+        <div id="lightbox-inner">
+          <button type="button" id="lightbox-close" aria-label="Close photo">&times;</button>
+          <img id="lightbox-img" src="" alt="">
+          <p id="lightbox-caption"></p>
+        </div>
+      </div>
+
+      <div class="left-drawer" id="stats-drawer" hidden>
+        <h3>Action at a glance</h3>
+        <p class="grant-ref">Contract 700001756-01-04 &middot; Annex I</p>
+        <div class="stat-grid">
+          <div class="stat"><b>&euro;144,450</b><span>total eligible cost / EU contribution</span></div>
+          <div class="stat"><b>12</b><span>month action</span></div>
+          <div class="stat"><b>3</b><span>cooperatives strengthened</span></div>
+          <div class="stat"><b>10 + 5</b><span>installations: cooperative farms + secondary schools</span></div>
+          <div class="stat"><b>66</b><span>learning events, incl. 1 study visit (Panama)</span></div>
+          <div class="stat"><b>120</b><span>people trained (48 women &middot; 24 youth)</span></div>
+          <div class="stat"><b>12&ndash;15%</b><span>current flock mortality (context)</span></div>
+          <div class="stat"><b>70%</b><span>target adopting a circular practice</span></div>
+          <div class="stat"><b>3</b><span>target buyer supply agreements</span></div>
+        </div>
+        <p class="method-note">These are targets and context from the signed action description, not completed results. <button type="button" class="link-btn" id="method-toggle">How we verify these facts</button></p>
+        <p class="method-detail" id="method-detail" hidden>The signed grant contract (Annex I) is the source of truth for confirmed figures. Business, financial and by-law documents provide supporting context only. Anything marked &ldquo;Proposed &ndash; validate&rdquo; is an illustrative concept, not fixed in the signed action, and needs GCLL confirmation before being treated as fact.</p>
+      </div>
+
+      <div class="left-drawer" id="flows-drawer" hidden>
+        <h3>Circular flows</h3>
+        <p class="grant-ref">Toggle a loop to isolate it in the scene</p>
+        <div id="flow-list"></div>
+      </div>
+    </div>
+    <nav class="legend-rail" id="legend-rail" aria-label="Model components"></nav>
+  </main>
+
+  <div id="live-region" class="sr-only" aria-live="polite"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  var COLORS = {
+    terracotta: 0xc0603a,
+    gold: 0xe3a93a,
+    teal: 0x4fa697,
+    leaf: 0x8bbf6f,
+    amber: 0xd98a3d,
+    cream: 0xf1ecda,
+    violet: 0x8f7fd1
+  };
+
+  function hex(n){ return '#' + n.toString(16).padStart(6,'0'); }
+
+  var REDUCED_MOTION = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+  /* ---------------- content data model ----------------
+     status: 'confirmed'  -> stated in signed grant contract 700001756-01-04, Annex I
+              'proposed'   -> illustrative concept used in this model, not fixed in the
+                              signed action; needs GCLL confirmation
+     Source: Final Contract for EUCaN Circular Poultry Grant (signed 2026-09-10).
+  ------------------------------------------------------- */
+  var CATEGORIES = ['Production','Flock Health','Waste to Resource','Energy and Water','Processing and Market','Learning and Governance'];
+
+  var HOTSPOTS_META = [
+    { id:'poultry', title:'Poultry House', category:'Production', status:'confirmed',
+      relatedActivity:'A1 &middot; A2 &middot; A5', tag:'Production', dot:COLORS.leaf, interiorAvailable:true,
+      inputs:'Feed, chicks/replacement stock, water, energy',
+      outputs:'Live birds, eggs, manure, farm records',
+      beneficiaries:'Cooperative member farmers',
+      desc:'Smallholder flocks average 120 birds per farm with 12&ndash;15% mortality today. This hub is where feed, biosecurity and flock-management training (Activities A2 &amp; A5) come together on the ground.',
+      images:[{ url:'https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?auto=format&fit=crop&w=800&q=70', alt:'Chickens inside a small-scale poultry coop' }] },
+
+    { id:'biogas', title:'Biogas Digester', category:'Waste to Resource', status:'confirmed',
+      relatedActivity:'A1', tag:'Waste &rarr; Energy', dot:COLORS.terracotta,
+      inputs:'Chicken manure',
+      outputs:'Biogas energy, nutrient-rich digestate',
+      beneficiaries:'Farm energy use, lower fuel costs',
+      desc:'Converts chicken manure into biogas for cooking or power, plus a nutrient-rich digestate &mdash; manure-to-biogas is named as a confirmed circular-economy method under Activity A1.',
+      images:[{ url:'https://images.unsplash.com/photo-1628744876497-eb30460be9f6?auto=format&fit=crop&w=800&q=70', alt:'Small-scale anaerobic biodigester dome' }] },
+
+    { id:'composting', title:'Composting Bay', category:'Waste to Resource', status:'confirmed',
+      relatedActivity:'A1', tag:'Waste &rarr; Fertiliser', dot:COLORS.terracotta,
+      inputs:'Manure, digestate, crop/food waste',
+      outputs:'Organic fertiliser / compost',
+      beneficiaries:'Crop plots, lower fertiliser costs',
+      desc:'Turns manure and leftover digestate into organic fertiliser, closing the nutrient loop back to feed crops and cutting the cooperatives&rsquo; chemical-fertiliser bill.',
+      images:[{ url:'https://images.unsplash.com/photo-1591857177580-dc82b9ac4e1e?auto=format&fit=crop&w=800&q=70', alt:'Aerated compost bay turning organic waste into humus' }] },
+
+    { id:'bsf', title:'Black Soldier Fly Unit', category:'Waste to Resource', status:'confirmed',
+      relatedActivity:'A1 &middot; A2', tag:'Waste &rarr; Feed', dot:COLORS.amber,
+      inputs:'Organic waste',
+      outputs:'Protein-rich poultry feed ingredient',
+      beneficiaries:'Host farms and schools; cooperative feed costs',
+      desc:'Black Soldier Fly production units for sustainable poultry feed are named among the demonstration technologies in Activity A1 and taught in Activity A2. Not every site receives identical equipment &mdash; each installation is tailored to its site assessment.',
+      images:[{ url:'https://images.unsplash.com/photo-1534067783941-51c9c23ecefd?auto=format&fit=crop&w=800&q=70', alt:'Insect larvae rearing trays used in bio-conversion systems' }] },
+
+    { id:'cassava', title:'Cassava Feed Plot', category:'Production', status:'confirmed',
+      relatedActivity:'A1 &middot; A2', tag:'Farm-Grown Feed', dot:COLORS.amber,
+      inputs:'Cassava cuttings, land, labour, compost',
+      outputs:'Farm-grown feed ingredient',
+      beneficiaries:'Lower feed costs where appropriate',
+      desc:'Cassava-based feed demonstration systems (&ldquo;where appropriate&rdquo;) are named under Activity A1 and taught as an alternative feed system in A2. The contract does not make cassava the only feed crop, and not every site will host one.',
+      images:[{ url:'https://images.unsplash.com/photo-1595974482597-4b8da8879bc5?auto=format&fit=crop&w=800&q=70', alt:'Cassava plants growing in a tropical field plot' }] },
+
+    { id:'solar', title:'Solar Array', category:'Energy and Water', status:'confirmed',
+      relatedActivity:'A1', tag:'Renewable Energy', dot:COLORS.gold,
+      inputs:'Sunlight',
+      outputs:'Electricity for farm and processing equipment',
+      beneficiaries:'All sites with solar-powered systems',
+      desc:'Solar-powered energy and water systems, shown feasible at small scale in the 2025 Carriacou training, are a confirmed method under Activity A1 to cut running costs and add resilience during grid outages.',
+      images:[{ url:'https://images.unsplash.com/photo-1509391366360-2e959784a276?auto=format&fit=crop&w=800&q=70', alt:'Ground-mounted solar photovoltaic panel array' }] },
+
+    { id:'rainwater', title:'Rainwater Tank', category:'Energy and Water', status:'proposed',
+      relatedActivity:'resilience narrative, not itemised', tag:'Water (proposed)', dot:COLORS.teal,
+      inputs:'Rainfall (concept)',
+      outputs:'Stored water for poultry / wash-down (concept)',
+      beneficiaries:'Sites with confirmed water systems, once specified',
+      desc:'Proposed concept &mdash; subject to validation. Rainwater harvesting is cited in the contract as a resilience practice alongside solar and biogas, but it is not itemised as an installation, so the equipment and which sites receive it are not yet confirmed.',
+      images:[{ url:'https://images.unsplash.com/photo-1638294835410-1f238127dfd8?auto=format&fit=crop&w=800&q=70', alt:'Elevated water storage tank (generic, not a farm-scale poly tank)' }] },
+
+    { id:'biosecurity', title:'Biosecurity Station', category:'Flock Health', status:'confirmed',
+      relatedActivity:'A5', tag:'Flock Health', dot:COLORS.cream,
+      inputs:'PPE, disinfectant, hygiene supplies',
+      outputs:'Reduced disease introduction, healthier flocks',
+      beneficiaries:'Cooperative member farmers',
+      desc:'Footbaths, PPE and hygiene practice support the veterinary and biosecurity work confirmed under Activity A5. The exact kit contents and a one-kit-per-site allocation shown here are illustrative, not a confirmed equipment list.',
+      images:[{ url:'https://images.unsplash.com/photo-1584634731339-252c581abfc5?auto=format&fit=crop&w=800&q=70', alt:'Farm biosecurity footbath and sanitation gate' }] },
+
+    { id:'market', title:'Processing &amp; Market Hub', category:'Processing and Market', status:'confirmed',
+      relatedActivity:'A3', tag:'Value Chain', dot:COLORS.cream, interiorAvailable:true,
+      inputs:'Live birds and eggs from cooperative farms',
+      outputs:'Processed, packaged, quality-checked products',
+      beneficiaries:'Hotels, supermarkets, schools, institutional buyers',
+      desc:'Cooperative-run processing, packaging and quality assurance (Activity A3) link farms to buyers, targeting three formal supply agreements. Organic certification is planned first, with halal certification where applicable &mdash; both are planned work, not yet achieved.',
+      images:[{ url:'https://images.unsplash.com/photo-1587593810167-a84920ea0781?auto=format&fit=crop&w=800&q=70', alt:'Packaged fresh poultry and egg products' }] },
+
+    { id:'school', title:'Secondary School Demo Site', category:'Learning and Governance', status:'confirmed',
+      relatedActivity:'A1 &middot; A2', tag:'Knowledge Sharing', dot:COLORS.amber,
+      inputs:'Existing school poultry programme, demonstration equipment, training',
+      outputs:'Trained students and staff; a community knowledge-sharing centre',
+      beneficiaries:'Students, teachers, wider community',
+      desc:'Five of the 15 installations are planned at selected secondary schools that already run poultry programmes, doubling as community training and knowledge-sharing centres. The specific schools and each school&rsquo;s equipment package are not yet named.',
+      images:[{ url:'https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&w=800&q=70', alt:'Secondary school students in a practical agriculture session' }] },
+
+    { id:'training', title:'Training &amp; Learning Hub', category:'Learning and Governance', status:'confirmed',
+      relatedActivity:'A2', tag:'Training &amp; Study Tour', dot:COLORS.violet,
+      inputs:'Training manuals, the 15 demonstration sites, trainers and resource persons',
+      outputs:'About 120 people trained (48 women, 24 youth) through 66 learning events',
+      beneficiaries:'Cooperative members, farmers, women, youth (18&ndash;35), students, agricultural officers',
+      desc:'Activity A2 mixes classroom workshops, hands-on demonstrations at the 15 sites, coaching visits and peer exchange. Targets: 10 trainings, 45 demonstration sessions, 10 coaching visits and 1 international study visit &mdash; to Cooperativa Juan XXIII in Santiago de Veraguas, Panama. Lessons come home through GCLL as the national knowledge hub.',
+      images:[{ url:'https://images.unsplash.com/photo-1709532386360-bf8651a95368?auto=format&fit=crop&w=800&q=70', alt:'Farmers gathered for a field learning session' }] }
+  ];
+
+  var POS = {
+    poultry:     { x: 0,   z: 0  },
+    biogas:      { x:-6,   z:-3  },
+    composting:  { x:-9.5, z:-6.5},
+    bsf:         { x: 6,   z:-3  },
+    cassava:     { x:-9.5, z: 3  },
+    solar:       { x: 5,   z: 5  },
+    rainwater:   { x: 2.2, z: 2.2},
+    biosecurity: { x: 0,   z: 4.6},
+    market:      { x: 13,  z: 7  },
+    school:      { x:-15,  z: 9.5},
+    training:    { x:-5.2, z: 8  }
+  };
+
+  var LOOPS = [
+    { id:'manure',    label:'Manure &amp; waste',        color:COLORS.terracotta, status:'confirmed' },
+    { id:'nutrients', label:'Compost &amp; fertiliser',  color:COLORS.leaf,       status:'confirmed' },
+    { id:'feed',      label:'BSF &amp; feed loop',       color:COLORS.amber,      status:'confirmed' },
+    { id:'energy',    label:'Solar energy',              color:COLORS.gold,       status:'confirmed' },
+    { id:'water',     label:'Water',                     color:COLORS.teal,       status:'proposed'  },
+    { id:'market',    label:'Products to market',        color:COLORS.cream,      status:'confirmed' },
+    { id:'learning',  label:'Training &amp; learning',   color:COLORS.violet,     status:'confirmed' }
+  ];
+
+  var CONNECTIONS = [
+    { a:'poultry', b:'biogas',     color:COLORS.terracotta, h:2.1, loop:'manure' },
+    { a:'biogas',  b:'composting', color:COLORS.terracotta, h:1.6, loop:'manure' },
+    { a:'composting', b:'cassava', color:COLORS.leaf,       h:1.9, loop:'nutrients' },
+    { a:'poultry', b:'bsf',        color:COLORS.amber,      h:2.0, sway:0.5,  loop:'feed' },
+    { a:'bsf',     b:'poultry',    color:COLORS.amber,      h:2.8, sway:-0.5, loop:'feed' },
+    { a:'solar',   b:'poultry',    color:COLORS.gold,       h:2.4, loop:'energy' },
+    { a:'rainwater', b:'poultry',  color:COLORS.teal,       h:1.4, loop:'water' },
+    { a:'poultry', b:'market',     color:COLORS.cream,      h:2.6, loop:'market' },
+    { a:'training', b:'poultry',   color:COLORS.violet,     h:2.3, sway:0.3,  loop:'learning' },
+    { a:'training', b:'school',    color:COLORS.violet,     h:2.6, sway:-0.4, loop:'learning' },
+    { a:'training', b:'biogas',    color:COLORS.violet,     h:3.0, sway:0.6,  loop:'learning' }
+  ];
+
+  var INTERIORS = {
+    poultry: {
+      note:'Generic illustrative layout for orientation only - not a technical drawing, stocking density or equipment spec.',
+      zones:[
+        { label:'Entry & footbath', color:COLORS.teal, desc:'Boundary between clean and dirty zones - boots and equipment are disinfected before entering the production area.' },
+        { label:'PPE storage', color:COLORS.cream, desc:'Boots, gloves and coveralls kept at the entry point as part of basic biosecurity practice (Activity A5).' },
+        { label:'Feed storage', color:COLORS.terracotta, desc:'Bagged feed kept dry and off the ground near the entrance.' },
+        { label:'Litter & production area', color:0x8a7a54, desc:'Open litter floor where the flock is reared, with ventilation and space managed for bird welfare.' },
+        { label:'Feed & water line', color:COLORS.amber, desc:'Feeders and drinkers run through the house so every bird has consistent access.' },
+        { label:'Ventilation', color:0x8f9a8a, desc:'Ridge vent and open sidewalls (visible from outside) keep airflow moving through the house.' },
+        { label:'Lighting', color:0xe8c97a, desc:'Basic lighting supports feeding, inspection and night-time monitoring.' },
+        { label:'Record-keeping point', color:COLORS.gold, desc:'Farmers log flock health, feed use and mortality here, feeding into cooperative monitoring (Activity A6).' }
+      ]
+    },
+    market: {
+      note:'Generic illustrative process journey for orientation only - not a floor plan or equipment spec. Slaughter is not depicted.',
+      zones:[
+        { label:'Receiving', color:COLORS.leaf, desc:'Live birds and eggs arrive from cooperative farms and are logged in.' },
+        { label:'Processing', color:0xe7e0cd, desc:'Hygienic processing and packaging area under Activity A3 - kept abstract here, not depicted graphically.' },
+        { label:'Chilling / cold storage', color:COLORS.teal, desc:'Processed product is chilled and stored before dispatch.' },
+        { label:'Packaging & labelling', color:COLORS.amber, desc:'Products are packaged and labelled ahead of organic-first, halal-where-applicable certification - planned work, not yet achieved.' },
+        { label:'Quality records', color:COLORS.gold, desc:'Batch and quality records support certification and buyer requirements.' },
+        { label:'Dispatch', color:COLORS.terracotta, desc:'Finished product leaves for hotels, supermarkets, schools and other buyers via the targeted supply agreements.' }
+      ]
+    }
+  };
+
+  var STORY_STEPS = [
+    { title:'The challenge', focus:'poultry', isolate:null,
+      camPos:[16,13,20], camTarget:[0,1,0],
+      text:'Smallholder flocks average 120 birds per farm with 12-15% mortality today. Feed is costly, processing is limited, and market access is fragile.' },
+    { title:'Protect the flock', focus:'biosecurity', isolate:null,
+      camPos:[5,6,10], camTarget:[0.3,1,2.5],
+      text:'Feed support, veterinary guidance, hygiene and biosecurity (Activity A5) come first - they are what keeps everything downstream worth building.' },
+    { title:'Turn manure into energy', focus:'biogas', isolate:['manure'],
+      camPos:[-2,6,5], camTarget:[-6,1,-3],
+      text:'Manure enters a digester and becomes biogas for cooking or power - a confirmed circular-economy method under Activity A1.' },
+    { title:'Return nutrients to production', focus:'composting', isolate:['manure','nutrients'],
+      camPos:[-8,7,2], camTarget:[-9.5,1,-2],
+      text:'Digestate and manure become compost and organic fertiliser, closing the nutrient loop back to the soil and crops.' },
+    { title:'Add resilient energy and water', focus:'solar', isolate:['energy','water'],
+      camPos:[6,7,9], camTarget:[3,1,3],
+      text:'Solar-powered energy is confirmed under Activity A1. Rainwater harvesting fits the resilience narrative, but the equipment and placement are not yet confirmed.' },
+    { title:'Cooperate to process and sell', focus:'market', isolate:['market'],
+      camPos:[15,8,15], camTarget:[13,1,7],
+      text:'Cooperative-run processing, packaging and quality assurance (Activity A3) link farms to buyers - targeting three formal supply agreements.' },
+    { title:'Train, exchange and learn abroad', focus:'training', isolate:['learning'],
+      camPos:[-1,7,15], camTarget:[-5.2,1,8],
+      text:'Activity A2 delivers 10 trainings, 45 demonstration sessions and 10 coaching visits across the 15 sites, plus one study visit to Cooperativa Juan XXIII in Panama - lessons come home through GCLL.' },
+    { title:'Learn, monitor and replicate', focus:null, isolate:null,
+      camPos:[16,13,20], camTarget:[0,1,0],
+      text:'15 installations, 120 people trained, three cooperatives strengthened, women and youth included, and a model with Caribbean replication potential. Switch to Grenada network to see how the islands connect.' }
+  ];
+
+  function announce(msg){
+    var el = document.getElementById('live-region');
+    if (el) el.textContent = msg;
+  }
+
+  /* Decodes the HTML entities used in title/tag strings (e.g. "&amp;") so they
+     read correctly in the plain-text ARIA live announcements. */
+  var entityDecoder = document.createElement('textarea');
+  function plainText(html){
+    entityDecoder.innerHTML = html;
+    return entityDecoder.value;
+  }
+
+  /* ---------------- three.js setup ---------------- */
+  var wrap = document.getElementById('canvas-wrap');
+  var scene = new THREE.Scene();
+  scene.background = new THREE.Color(0xcdeaf0);
+  scene.fog = new THREE.Fog(0xcfe6d6, 48, 135);
+
+  var DEFAULT_CAM_POS = new THREE.Vector3(16, 13, 20);
+  var DEFAULT_TARGET = new THREE.Vector3(0, 1, 0);
+
+  var camera = new THREE.PerspectiveCamera(42, 1, 0.1, 200);
+  camera.position.copy(DEFAULT_CAM_POS);
+
+  var renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true, preserveDrawingBuffer:true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  wrap.appendChild(renderer.domElement);
+
+  var controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.target.copy(DEFAULT_TARGET);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.08;
+  controls.minDistance = 9;
+  controls.maxDistance = 42;
+  controls.maxPolarAngle = Math.PI * 0.49;
+  controls.update();
+
+  var cameraTargetGoal = DEFAULT_TARGET.clone();
+
+  /* lights */
+  var hemi = new THREE.HemisphereLight(0xbfe3ea, 0x4a6b3a, 0.95);
+  scene.add(hemi);
+  var sun = new THREE.DirectionalLight(0xfff2d6, 1.05);
+  sun.position.set(14, 20, 8);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(1024, 1024);
+  sun.shadow.camera.left = -26; sun.shadow.camera.right = 26;
+  sun.shadow.camera.top = 26; sun.shadow.camera.bottom = -26;
+  scene.add(sun);
+
+  /* ---------------- shared look: procedural textures + small builders ---------------- */
+  function canvasTex(w, h, draw, rx, ry){
+    var c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    draw(c.getContext('2d'), w, h);
+    var t = new THREE.CanvasTexture(c);
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.repeat.set(rx || 1, ry || 1);
+    t.anisotropy = 4;
+    return t;
+  }
+
+  var TEX = {
+    corrugated: function(base, rx){
+      return canvasTex(128, 64, function(g, w, h){
+        g.fillStyle = base; g.fillRect(0, 0, w, h);
+        for (var x = 0; x < w; x += 16){
+          var gr = g.createLinearGradient(x, 0, x + 16, 0);
+          gr.addColorStop(0, 'rgba(255,255,255,0.26)');
+          gr.addColorStop(0.5, 'rgba(255,255,255,0)');
+          gr.addColorStop(1, 'rgba(0,0,0,0.28)');
+          g.fillStyle = gr; g.fillRect(x, 0, 16, h);
+        }
+      }, rx || 6, 1);
+    },
+    plaster: function(base, rx, ry){
+      return canvasTex(128, 128, function(g, w, h){
+        g.fillStyle = base; g.fillRect(0, 0, w, h);
+        for (var i = 0; i < 260; i++){
+          g.fillStyle = Math.random() < 0.5 ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.045)';
+          g.fillRect(Math.random() * w, Math.random() * h, 2 + Math.random() * 6, 2 + Math.random() * 5);
+        }
+      }, rx || 1, ry || 1);
+    },
+    grass: function(){
+      return canvasTex(256, 256, function(g, w, h){
+        g.fillStyle = '#688f4c'; g.fillRect(0, 0, w, h);
+        var tones = ['rgba(88,130,62,0.35)', 'rgba(118,160,86,0.28)', 'rgba(80,120,58,0.3)'];
+        for (var i = 0; i < 240; i++){
+          g.fillStyle = tones[i % 3];
+          g.beginPath();
+          g.ellipse(Math.random() * w, Math.random() * h, 6 + Math.random() * 16, 4 + Math.random() * 9, Math.random() * 3, 0, Math.PI * 2);
+          g.fill();
+        }
+      }, 9, 9);
+    },
+    rows: function(soil, crop, rx, ry){
+      return canvasTex(64, 64, function(g, w, h){
+        g.fillStyle = soil; g.fillRect(0, 0, w, h);
+        g.fillStyle = crop;
+        for (var y = 6; y < h; y += 16) g.fillRect(0, y, w, 6);
+      }, rx || 4, ry || 4);
+    },
+    mesh: function(rx, ry){
+      return canvasTex(32, 32, function(g, w, h){
+        g.clearRect(0, 0, w, h);
+        g.strokeStyle = 'rgba(70,74,70,0.75)'; g.lineWidth = 1.5;
+        g.beginPath();
+        for (var i = 0; i <= w; i += 8){ g.moveTo(i, 0); g.lineTo(i, h); g.moveTo(0, i); g.lineTo(w, i); }
+        g.stroke();
+      }, rx || 8, ry || 4);
+    },
+    concrete: function(rx, ry){
+      return canvasTex(128, 128, function(g, w, h){
+        g.fillStyle = '#c4beae'; g.fillRect(0, 0, w, h);
+        for (var i = 0; i < 300; i++){
+          g.fillStyle = Math.random() < 0.5 ? 'rgba(255,255,255,0.08)' : 'rgba(60,50,30,0.07)';
+          g.fillRect(Math.random() * w, Math.random() * h, 1 + Math.random() * 4, 1 + Math.random() * 3);
+        }
+      }, rx || 2, ry || 2);
+    }
+  };
+
+  function edged(mesh, color, opacity){
+    var e = new THREE.LineSegments(
+      new THREE.EdgesGeometry(mesh.geometry),
+      new THREE.LineBasicMaterial({ color: color === undefined ? 0x1b1710 : color, transparent: true, opacity: opacity === undefined ? 0.28 : opacity })
+    );
+    mesh.add(e);
+    return mesh;
+  }
+
+  function texBox(w, h, d, map, rough){
+    var m = box(w, h, d, 0xffffff, rough);
+    m.material.map = map;
+    m.material.needsUpdate = true;
+    return m;
+  }
+
+  function signBoard(text, w, h, bg, fg, fontPx){
+    var g = new THREE.Group();
+    var px = fontPx || 30;
+    var tex = canvasTex(256, Math.round(256 * h / w), function(c, cw, ch){
+      c.fillStyle = bg; c.fillRect(0, 0, cw, ch);
+      c.strokeStyle = fg; c.lineWidth = 6; c.strokeRect(6, 6, cw - 12, ch - 12);
+      c.fillStyle = fg;
+      c.font = 'bold ' + px + 'px Arial, sans-serif';
+      c.textAlign = 'center'; c.textBaseline = 'middle';
+      var lines = text.split('|');
+      lines.forEach(function(line, i){
+        c.fillText(line, cw / 2, ch / 2 + (i - (lines.length - 1) / 2) * px * 1.18);
+      });
+    });
+    var face = new THREE.MeshBasicMaterial({ map: tex });
+    var front = new THREE.Mesh(new THREE.PlaneGeometry(w, h), face);
+    front.position.z = 0.026;
+    var back = new THREE.Mesh(new THREE.PlaneGeometry(w, h), face);
+    back.rotation.y = Math.PI; back.position.z = -0.026;
+    g.add(box(w + 0.05, h + 0.05, 0.04, 0x3b3a34, 0.8));
+    g.add(front); g.add(back);
+    return g;
+  }
+
+  function person(shirt, pants, skin, scale){
+    var p = new THREE.Group();
+    var legs = cyl(0.075, 0.085, 0.3, pants, 8); legs.position.y = 0.15; p.add(legs);
+    var torso = cyl(0.09, 0.1, 0.3, shirt, 8); torso.position.y = 0.45; p.add(torso);
+    var head = new THREE.Mesh(new THREE.SphereGeometry(0.075, 10, 8), new THREE.MeshStandardMaterial({ color: skin, roughness: 0.8 }));
+    head.position.y = 0.68; head.castShadow = true; p.add(head);
+    [-1, 1].forEach(function(s){
+      var arm = cyl(0.028, 0.028, 0.26, shirt, 6);
+      arm.position.set(s * 0.13, 0.46, 0); arm.rotation.z = s * 0.12; p.add(arm);
+    });
+    p.scale.setScalar(scale || 1);
+    return p;
+  }
+
+  function fenceRun(parent, x1, z1, x2, z2, color){
+    var dx = x2 - x1, dz = z2 - z1, len = Math.sqrt(dx * dx + dz * dz);
+    var n = Math.max(1, Math.round(len / 0.75));
+    for (var i = 0; i <= n; i++){
+      var post = cyl(0.035, 0.035, 0.6, color || 0xcbb27a, 6);
+      post.position.set(x1 + dx * i / n, 0.3, z1 + dz * i / n);
+      parent.add(post);
+    }
+    [0.22, 0.46].forEach(function(y){
+      var rail = box(len, 0.03, 0.03, color || 0xcbb27a, 0.7);
+      rail.position.set((x1 + x2) / 2, y, (z1 + z2) / 2);
+      rail.rotation.y = -Math.atan2(dz, dx);
+      parent.add(rail);
+    });
+  }
+
+  function palmTree(h, lean){
+    var g = new THREE.Group();
+    var segs = 4, x = 0, y = 0;
+    for (var i = 0; i < segs; i++){
+      var seg = cyl(0.085 - i * 0.012, 0.11 - i * 0.012, h / segs, 0x8a6a45, 7);
+      y += h / segs / 2;
+      seg.position.set(x, y, 0);
+      seg.rotation.z = -lean * 0.08;
+      seg.castShadow = false;
+      g.add(seg);
+      y += h / segs / 2;
+      x += lean * 0.08 * h / segs;
+    }
+    var frondMat = new THREE.MeshStandardMaterial({ color: 0x4c8a3c, roughness: 0.8, flatShading: true });
+    for (var f = 0; f < 7; f++){
+      var frond = new THREE.Mesh(new THREE.ConeGeometry(0.15, 1.15, 4), frondMat);
+      frond.scale.z = 0.3;
+      var ang = f / 7 * Math.PI * 2;
+      frond.position.set(x + Math.cos(ang) * 0.42, y - 0.02, Math.sin(ang) * 0.42);
+      frond.rotation.order = 'YZX';
+      frond.rotation.y = -ang;
+      frond.rotation.z = -1.35 - (f % 2) * 0.35;
+      g.add(frond);
+    }
+    var nut = new THREE.Mesh(new THREE.SphereGeometry(0.07, 6, 6), new THREE.MeshStandardMaterial({ color: 0x6b4a2e }));
+    nut.position.set(x, y - 0.08, 0.06);
+    g.add(nut);
+    return g;
+  }
+
+  function bananaClump(){
+    var g = new THREE.Group();
+    var leafMat = new THREE.MeshStandardMaterial({ color: 0x5fa244, roughness: 0.75, side: THREE.DoubleSide });
+    [[0, 0, 0.7], [0.35, 0.2, 0.55], [-0.3, 0.25, 0.62]].forEach(function(p){
+      var trunk = cyl(0.05, 0.065, p[2], 0x8fb66a, 6);
+      trunk.position.set(p[0], p[2] / 2, p[1]);
+      trunk.castShadow = false;
+      g.add(trunk);
+      for (var i = 0; i < 4; i++){
+        var leaf = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.02, 0.72), leafMat);
+        var ang = i / 4 * Math.PI * 2 + p[0];
+        leaf.position.set(p[0] + Math.cos(ang) * 0.3, p[2] + 0.02, p[1] + Math.sin(ang) * 0.3);
+        leaf.rotation.order = 'YXZ';
+        leaf.rotation.y = -ang + Math.PI / 2;
+        leaf.rotation.x = 0.5;
+        g.add(leaf);
+      }
+    });
+    return g;
+  }
+
+  function mangoTree(scale){
+    var g = new THREE.Group();
+    var trunk = cyl(0.11, 0.15, 0.9, 0x6f5237, 7);
+    trunk.position.y = 0.45; trunk.castShadow = false;
+    g.add(trunk);
+    var crown = new THREE.Mesh(new THREE.IcosahedronGeometry(0.75, 1), new THREE.MeshStandardMaterial({ color: 0x4f8b3f, roughness: 0.9, flatShading: true }));
+    crown.position.y = 1.35; crown.scale.set(1.15, 0.85, 1.15);
+    g.add(crown);
+    g.scale.setScalar(scale || 1);
+    return g;
+  }
+
+  function shrub(color, s){
+    var m = new THREE.Mesh(new THREE.IcosahedronGeometry(0.3, 0), new THREE.MeshStandardMaterial({ color: color, roughness: 0.9, flatShading: true }));
+    m.scale.set(s, s * 0.75, s);
+    m.position.y = 0.16 * s;
+    return m;
+  }
+
+  function seededRandom(seed){
+    return function(){
+      seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+      var t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+
+  /* ---------------- island ground, sea, hills, tracks, fields, planting ---------------- */
+  var sea = new THREE.Mesh(
+    new THREE.PlaneGeometry(400, 400),
+    new THREE.MeshStandardMaterial({ color: 0x86cbd6, roughness: 0.4, metalness: 0.05 })
+  );
+  sea.rotation.x = -Math.PI / 2;
+  sea.position.y = -0.08;
+  scene.add(sea);
+
+  var grassTex = TEX.grass();
+  var ground = new THREE.Mesh(
+    new THREE.CircleGeometry(40, 64),
+    new THREE.MeshStandardMaterial({ color: 0xffffff, map: grassTex, roughness: 1 })
+  );
+  ground.rotation.x = -Math.PI / 2;
+  ground.receiveShadow = true;
+  scene.add(ground);
+
+  var beach = new THREE.Mesh(
+    new THREE.RingGeometry(39.6, 41.8, 64),
+    new THREE.MeshStandardMaterial({ color: 0xe6d8a8, roughness: 1 })
+  );
+  beach.rotation.x = -Math.PI / 2;
+  beach.position.y = 0.006;
+  scene.add(beach);
+
+  function makeStrip(from, to, width, color, opacity, y){
+    var dx = to.x - from.x, dz = to.z - from.z;
+    var len = Math.sqrt(dx*dx + dz*dz);
+    var geo = new THREE.PlaneGeometry(len, width);
+    var mat = new THREE.MeshBasicMaterial({ color:color, transparent:true, opacity:opacity });
+    var mesh = new THREE.Mesh(geo, mat);
+    mesh.rotation.x = -Math.PI / 2;
+    mesh.rotation.z = -Math.atan2(dz, dx);
+    mesh.position.set((from.x+to.x)/2, y, (from.z+to.z)/2);
+    return mesh;
+  }
+  scene.add(makeStrip(POS.poultry, POS.market, 1.1, 0xcbb27a, 0.9, 0.02));
+  [['poultry','biosecurity'],['poultry','solar'],['poultry','bsf'],['poultry','biogas'],['biogas','composting'],['composting','cassava'],['poultry','training']].forEach(function(pair){
+    scene.add(makeStrip(POS[pair[0]], POS[pair[1]], 0.62, 0xd2bd88, 0.85, 0.018));
+  });
+
+  (function dashedPath(){
+    var from = POS.training, to = POS.school;
+    var steps = 14;
+    for (var i=1; i<steps; i++){
+      if (i % 2 !== 0) continue;
+      var t = i/steps;
+      var dot = new THREE.Mesh(
+        new THREE.CircleGeometry(0.16, 8),
+        new THREE.MeshBasicMaterial({ color:COLORS.violet, transparent:true, opacity:0.75 })
+      );
+      dot.rotation.x = -Math.PI/2;
+      dot.position.set(from.x + (to.x-from.x)*t, 0.03, from.z + (to.z-from.z)*t);
+      scene.add(dot);
+    }
+  })();
+
+  /* crop fields with rows, fenced */
+  [
+    { x:-14.5, z:-2.0, w:5.2, d:3.2, soil:'#6b4a2e', crop:'#5f9a3f' },
+    { x: 9.5,  z:-8.5, w:5.0, d:3.0, soil:'#73522f', crop:'#86b24a' },
+    { x: 14.5, z:-2.0, w:4.0, d:3.0, soil:'#6b4a2e', crop:'#c9a83e' }
+  ].forEach(function(f){
+    var field = new THREE.Mesh(
+      new THREE.PlaneGeometry(f.w, f.d),
+      new THREE.MeshStandardMaterial({ color:0xffffff, map:TEX.rows(f.soil, f.crop, f.w*1.2, f.d*1.2), roughness:1 })
+    );
+    field.rotation.x = -Math.PI/2;
+    field.position.set(f.x, 0.012, f.z);
+    field.receiveShadow = true;
+    scene.add(field);
+    var fence = new THREE.Group();
+    var hx = f.w/2 + 0.2, hz = f.d/2 + 0.2;
+    fenceRun(fence, -hx, -hz,  hx, -hz);
+    fenceRun(fence,  hx, -hz,  hx,  hz);
+    fenceRun(fence,  hx,  hz, -hx,  hz);
+    fenceRun(fence, -hx,  hz, -hx, -hz);
+    fence.position.set(f.x, 0, f.z);
+    scene.add(fence);
+  });
+
+  /* low-poly hills on the far side give the island a volcanic-ridge backdrop */
+  (function hills(){
+    var rnd = seededRandom(11);
+    for (var i = 0; i < 15; i++){
+      var ang = Math.PI * 0.5 + (i / 14) * Math.PI * 1.4;
+      var r = 35 + rnd() * 4;
+      var size = 4.5 + rnd() * 3;
+      var hill = new THREE.Mesh(
+        new THREE.SphereGeometry(size, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2),
+        new THREE.MeshStandardMaterial({ color: i % 2 ? 0x4a7a3c : 0x3d6b36, roughness: 1, flatShading: true })
+      );
+      hill.scale.y = 0.38 + rnd() * 0.22;
+      hill.position.set(Math.cos(ang) * r, 0, Math.sin(ang) * r);
+      scene.add(hill);
+    }
+  })();
+
+  /* scattered planting kept clear of stations and tracks */
+  (function planting(){
+    var rnd = seededRandom(7);
+    var keys = Object.keys(POS);
+    function clear(x, z, minD){
+      for (var i = 0; i < keys.length; i++){
+        var p = POS[keys[i]];
+        if (Math.hypot(p.x - x, p.z - z) < minD) return false;
+      }
+      if (Math.abs(x + 14.5) < 3.4 && Math.abs(z + 2) < 2.4) return false;
+      if (Math.abs(x - 9.5) < 3.4 && Math.abs(z + 8.5) < 2.4) return false;
+      if (Math.abs(x - 14.5) < 2.8 && Math.abs(z + 2) < 2.4) return false;
+      var a = POS.poultry, b = POS.market;
+      var t = ((x - a.x) * (b.x - a.x) + (z - a.z) * (b.z - a.z)) / (Math.pow(b.x - a.x, 2) + Math.pow(b.z - a.z, 2));
+      if (t > 0 && t < 1 && Math.hypot(a.x + (b.x - a.x) * t - x, a.z + (b.z - a.z) * t - z) < 1.4) return false;
+      return true;
+    }
+    function place(make, count, rMin, rMax, minD){
+      var placed = 0, tries = 0;
+      while (placed < count && tries < 400){
+        tries++;
+        var ang = rnd() * Math.PI * 2, r = rMin + rnd() * (rMax - rMin);
+        var x = Math.cos(ang) * r, z = Math.sin(ang) * r;
+        if (!clear(x, z, minD)) continue;
+        var obj = make(rnd);
+        obj.position.set(x, 0, z);
+        obj.rotation.y = rnd() * Math.PI * 2;
+        scene.add(obj);
+        placed++;
+      }
+    }
+    place(function(rn){ return palmTree(1.9 + rn() * 1.1, (rn() - 0.5) * 1.6); }, 15, 13, 36, 4.2);
+    place(function(rn){ return mangoTree(0.85 + rn() * 0.5); }, 11, 9, 32, 4.4);
+    place(function(rn){ return shrub(rn() < 0.5 ? 0x5a9445 : 0x4a8039, 0.8 + rn() * 0.9); }, 34, 5, 35, 2.6);
+    [[-12.4, -4.6], [-8.6, -9.2], [-13.0, 6.2], [-11.5, 5.4]].forEach(function(p){
+      var b = bananaClump(); b.position.set(p[0], 0, p[1]); scene.add(b);
+    });
+  })();
+
+  /* ---------------- hotspot builders ---------------- */
+  var hotspots = {};
+  var poultryFlock = [];
+  function registerHotspot(id, group){
+    group.userData.hotspotId = id;
+    var pos = POS[id];
+    group.position.set(pos.x, 0, pos.z);
+    scene.add(group);
+    hotspots[id] = group;
+    return group;
+  }
+
+  function box(w,h,d,color,rough){
+    var m = new THREE.Mesh(
+      new THREE.BoxGeometry(w,h,d),
+      new THREE.MeshStandardMaterial({ color:color, roughness: rough===undefined?0.85:rough })
+    );
+    m.castShadow = true; m.receiveShadow = true;
+    if (Math.min(w,h,d) >= 0.09) edged(m);
+    return m;
+  }
+  function cyl(rt,rb,h,color,seg,rough){
+    var m = new THREE.Mesh(
+      new THREE.CylinderGeometry(rt,rb,h,seg||16),
+      new THREE.MeshStandardMaterial({ color:color, roughness: rough===undefined?0.7:rough })
+    );
+    m.castShadow = true; m.receiveShadow = true;
+    return m;
+  }
+  function cone(r,h,seg,color){
+    var m = new THREE.Mesh(
+      new THREE.ConeGeometry(r,h,seg||4),
+      new THREE.MeshStandardMaterial({ color:color, roughness:0.8 })
+    );
+    m.castShadow = true;
+    return m;
+  }
+
+  /* A simple four-legged table/counter used inside interior cutaways. */
+  function table(w,h,d,color){
+    var grp = new THREE.Group();
+    var top = box(w, 0.05, d, color, 0.6);
+    top.position.y = h;
+    grp.add(top);
+    [[-w/2+0.05,-d/2+0.05],[w/2-0.05,-d/2+0.05],[-w/2+0.05,d/2-0.05],[w/2-0.05,d/2-0.05]].forEach(function(o){
+      var leg = cyl(0.02,0.02,h,0x555555,6);
+      leg.position.set(o[0], h/2, o[1]);
+      grp.add(leg);
+    });
+    return grp;
+  }
+
+  /* A two-slope gable roof (ridge along X) built from two oriented panels plus a
+     ridge cap. Returns a group whose local origin sits at the eave/wall-top line;
+     the caller positions it at the top of the walls it covers. */
+  function gableRoof(width, depth, ridgeHeight, overhang, roofColor){
+    var g = new THREE.Group();
+    var halfDepth = depth/2 + overhang;
+    var halfWidthEx = width/2 + overhang;
+    var slopeLen = Math.sqrt(halfDepth*halfDepth + ridgeHeight*ridgeHeight);
+    var thickness = 0.07;
+    var mat = new THREE.MeshStandardMaterial({
+      color:0xffffff, roughness:0.45, metalness:0.15,
+      map: TEX.corrugated(hex(roofColor), Math.max(3, Math.round(halfWidthEx*2/0.32)))
+    });
+
+    [-1,1].forEach(function(side){
+      var eave = new THREE.Vector3(0, 0, side*halfDepth);
+      var ridge = new THREE.Vector3(0, ridgeHeight, 0);
+      var mid = eave.clone().add(ridge).multiplyScalar(0.5);
+      var dir = ridge.clone().sub(eave).normalize();
+      var panel = new THREE.Mesh(new THREE.BoxGeometry(halfWidthEx*2, thickness, slopeLen), mat);
+      panel.position.copy(mid);
+      panel.quaternion.setFromUnitVectors(new THREE.Vector3(0,0,1), dir);
+      panel.castShadow = true; panel.receiveShadow = true;
+      g.add(panel);
+    });
+
+    var cap = new THREE.Mesh(
+      new THREE.BoxGeometry(halfWidthEx*2 + 0.06, 0.12, 0.18),
+      new THREE.MeshStandardMaterial({ color:0x33403a, roughness:0.6 })
+    );
+    cap.position.set(0, ridgeHeight, 0);
+    cap.castShadow = true;
+    g.add(cap);
+    return g;
+  }
+
+  /* A small stylised hen: body, head, comb, beak, tail and two legs. */
+  function buildChicken(bodyColor){
+    var c = new THREE.Group();
+    var body = new THREE.Mesh(
+      new THREE.SphereGeometry(0.16, 10, 8),
+      new THREE.MeshStandardMaterial({ color:bodyColor, roughness:0.9 })
+    );
+    body.scale.set(1, 0.85, 1.3);
+    body.position.y = 0.18;
+    body.castShadow = true;
+    c.add(body);
+
+    var head = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 8), new THREE.MeshStandardMaterial({ color:bodyColor, roughness:0.9 }));
+    head.position.set(0, 0.32, 0.2);
+    head.castShadow = true;
+    c.add(head);
+
+    var comb = new THREE.Mesh(new THREE.ConeGeometry(0.035, 0.08, 4), new THREE.MeshStandardMaterial({ color:0xc0392b }));
+    comb.position.set(0, 0.41, 0.2);
+    c.add(comb);
+
+    var beak = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.07, 4), new THREE.MeshStandardMaterial({ color:0xe3a93a }));
+    beak.rotation.x = Math.PI/2;
+    beak.position.set(0, 0.31, 0.3);
+    c.add(beak);
+
+    var tail = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.24, 4), new THREE.MeshStandardMaterial({ color:bodyColor, roughness:0.9 }));
+    tail.position.set(0, 0.3, -0.22);
+    tail.rotation.x = -0.95;
+    c.add(tail);
+
+    [-1,1].forEach(function(s){
+      var leg = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.14, 5), new THREE.MeshStandardMaterial({ color:0xd98a3d }));
+      leg.position.set(s*0.06, 0.07, 0.02);
+      c.add(leg);
+    });
+    return c;
+  }
+
+  /* Poultry house: open-sided tropical broiler house on a concrete slab, with a
+     plastered kick wall, wire-mesh sidewalls and roll-up curtains, a corrugated
+     roof with raised ridge vent, gutters, exhaust fans, feed silo, name sign and
+     an attached scratch yard with a small flock. */
+  (function(){
+    var g = new THREE.Group();
+    var exteriorHideParts = [];
+    var W = 3.6, D = 2.2, KICK = 0.55, WALLH = 1.5, SLAB = 0.12;
+    var RIDGE = 1.05;
+    var plasterCream = TEX.plaster('#eadfbd', 3, 1);
+
+    var slab = texBox(W+0.32, SLAB, D+0.32, TEX.concrete(3, 2), 0.9);
+    slab.position.y = SLAB/2;
+    g.add(slab);
+
+    var plinth = box(W+0.06, 0.16, D+0.06, 0x9d9887, 0.9);
+    plinth.position.y = SLAB + 0.08;
+    g.add(plinth);
+
+    var kick = texBox(W, KICK, D, plasterCream, 0.85);
+    kick.position.y = SLAB + KICK/2;
+    g.add(kick);
+
+    [-1,1].forEach(function(side){
+      var endWall = texBox(0.08, WALLH-KICK, D, TEX.plaster('#e2d5ae', 2, 1), 0.85);
+      endWall.position.set(side*W/2, SLAB+KICK+(WALLH-KICK)/2, 0);
+      g.add(endWall);
+      exteriorHideParts.push(endWall);
+    });
+
+    [-1,-0.34,0.34,1].forEach(function(fx){
+      [-1,1].forEach(function(fz){
+        var post = box(0.09, WALLH-KICK, 0.09, 0x6b5a3e, 0.8);
+        post.position.set(fx*W/2, SLAB+KICK+(WALLH-KICK)/2, fz*D/2);
+        g.add(post);
+      });
+    });
+
+    [-1,1].forEach(function(fz){
+      var plate = box(W+0.12, 0.09, 0.11, 0x5c4a34, 0.8);
+      plate.position.set(0, SLAB+WALLH-0.045, fz*D/2);
+      g.add(plate);
+    });
+
+    var meshMat = new THREE.MeshStandardMaterial({
+      color:0xffffff, map:TEX.mesh(20, 6), transparent:true, alphaTest:0.05, roughness:0.8, side:THREE.DoubleSide
+    });
+    [-1,1].forEach(function(fz){
+      var screen = new THREE.Mesh(new THREE.PlaneGeometry(W-0.1, WALLH-KICK-0.2), meshMat);
+      screen.position.set(0, SLAB+KICK+(WALLH-KICK-0.2)/2, fz*D/2);
+      g.add(screen);
+      exteriorHideParts.push(screen);
+
+      var curtain = box(W-0.16, 0.14, 0.07, 0x3a86b0, 0.7);
+      curtain.position.set(0, SLAB+WALLH-0.19, fz*(D/2+0.02));
+      g.add(curtain);
+      exteriorHideParts.push(curtain);
+    });
+
+    var roof = gableRoof(W+0.1, D+0.1, RIDGE, 0.3, 0xb3563a);
+    roof.position.y = SLAB + WALLH;
+    g.add(roof);
+    exteriorHideParts.push(roof);
+
+    var monitor = new THREE.Group();
+    var monBase = box(W*0.8, 0.22, 0.34, 0x4a3d34, 0.7);
+    monBase.position.y = 0.08;
+    monitor.add(monBase);
+    for (var ls=0; ls<5; ls++){
+      [-1,1].forEach(function(side){
+        var slat = box(W*0.76, 0.025, 0.07, 0x8f8574, 0.6);
+        slat.position.set(0, -0.02 + ls*0.05, side*0.18);
+        slat.rotation.x = side*0.5;
+        monitor.add(slat);
+      });
+    }
+    var monCap = box(W*0.86, 0.05, 0.54, 0x3d332a, 0.6);
+    monCap.position.y = 0.21;
+    monitor.add(monCap);
+    monitor.position.y = SLAB + WALLH + RIDGE + 0.06;
+    g.add(monitor);
+    exteriorHideParts.push(monitor);
+
+    var gableShape = new THREE.Shape();
+    gableShape.moveTo(-1.4, 0); gableShape.lineTo(1.4, 0); gableShape.lineTo(0, 1.03);
+    var gableMat = new THREE.MeshStandardMaterial({ color:0xe2d5ae, roughness:0.85, side:THREE.DoubleSide });
+    [-1,1].forEach(function(side){
+      var gable = new THREE.Mesh(new THREE.ShapeGeometry(gableShape), gableMat);
+      gable.rotation.y = Math.PI/2;
+      gable.position.set(side*(W/2+0.05), SLAB+WALLH, 0);
+      g.add(gable);
+      exteriorHideParts.push(gable);
+    });
+
+    [-1,1].forEach(function(fz){
+      var gutter = cyl(0.045, 0.045, W+0.5, 0x9aa0a3, 8, 0.5);
+      gutter.rotation.z = Math.PI/2;
+      gutter.position.set(0, SLAB+WALLH-0.02, fz*1.47);
+      gutter.castShadow = false;
+      g.add(gutter);
+      exteriorHideParts.push(gutter);
+    });
+    var downpipe = cyl(0.03, 0.03, SLAB+WALLH-0.06, 0x9aa0a3, 8, 0.5);
+    downpipe.position.set(W/2+0.05, (SLAB+WALLH-0.06)/2, 1.47);
+    g.add(downpipe);
+    var pipeToTank = cyl(0.03, 0.03, 0.9, 0x9aa0a3, 8, 0.5);
+    pipeToTank.rotation.x = Math.PI/2;
+    pipeToTank.rotation.z = -0.35;
+    pipeToTank.position.set(W/2+0.2, 0.05, 1.9);
+    g.add(pipeToTank);
+
+    [-0.5, 0.5].forEach(function(fz){
+      var fan = new THREE.Group();
+      var ring = cyl(0.22, 0.22, 0.07, 0x3b464c, 16, 0.5);
+      ring.rotation.z = Math.PI/2;
+      fan.add(ring);
+      var hub = cyl(0.045, 0.045, 0.1, 0x8a8f92, 8, 0.4);
+      hub.rotation.z = Math.PI/2;
+      fan.add(hub);
+      for (var b=0; b<3; b++){
+        var blade = box(0.02, 0.36, 0.07, 0x9aa0a3, 0.5);
+        blade.position.x = 0.03;
+        blade.rotation.x = b*Math.PI/3;
+        fan.add(blade);
+      }
+      fan.position.set(W/2+0.09, SLAB+KICK+0.5, fz);
+      g.add(fan);
+      exteriorHideParts.push(fan);
+    });
+
+    var door = box(0.62, KICK*0.92, 0.05, 0x2b2118, 0.9);
+    door.position.set(-0.9, SLAB+(KICK*0.92)/2, D/2+0.03);
+    g.add(door);
+    var ramp = box(0.62, 0.05, 0.55, 0x9c8a63, 0.9);
+    ramp.position.set(-0.9, 0.14, D/2+0.32);
+    ramp.rotation.x = -0.28;
+    g.add(ramp);
+
+    var feeder = cyl(0.16,0.2,0.28,0xb5651d,10);
+    feeder.position.set(0.55, 0.14, D/2+0.5);
+    g.add(feeder);
+    var drinker = cyl(0.14,0.14,0.05,0x9db3bb,10);
+    drinker.position.set(1.0, 0.12, D/2+0.45);
+    g.add(drinker);
+
+    var siloX = -W/2 - 0.85, siloZ = -0.55;
+    [[-0.16,-0.16],[0.16,-0.16],[0,0.2]].forEach(function(o){
+      var leg = cyl(0.025, 0.025, 0.4, 0x6f757a, 6);
+      leg.position.set(siloX+o[0], 0.2, siloZ+o[1]);
+      g.add(leg);
+    });
+    var silo = cyl(0.27, 0.27, 0.8, 0xb9c1c5, 16, 0.4);
+    silo.position.set(siloX, 0.8, siloZ);
+    g.add(silo);
+    var siloTop = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.24, 16), new THREE.MeshStandardMaterial({ color:0xa3acb0, roughness:0.4, metalness:0.2 }));
+    siloTop.position.set(siloX, 1.32, siloZ);
+    siloTop.castShadow = true;
+    g.add(siloTop);
+    var siloCone = new THREE.Mesh(new THREE.ConeGeometry(0.27, 0.18, 16), new THREE.MeshStandardMaterial({ color:0xa3acb0, roughness:0.4, metalness:0.2 }));
+    siloCone.rotation.x = Math.PI;
+    siloCone.position.set(siloX, 0.31, siloZ);
+    g.add(siloCone);
+
+    var sign = signBoard('POULTRY HOUSE', 1.25, 0.34, '#1c3c2d', '#f1ecda', 30);
+    sign.position.set(-1.55, 0.72, D/2+1.15);
+    g.add(sign);
+    [-0.5, 0.5].forEach(function(dx){
+      var sp = cyl(0.03, 0.03, 0.62, 0x6b5a3e, 6);
+      sp.position.set(-1.55+dx, 0.31, D/2+1.15);
+      g.add(sp);
+    });
+
+    /* attached scratch yard */
+    var yardCenterX = W/2 + 1.35, yardW = 2.5, yardD = D + 0.4;
+    var scratchGround = new THREE.Mesh(
+      new THREE.PlaneGeometry(yardW, yardD),
+      new THREE.MeshStandardMaterial({ color:0x8a7a54, roughness:1 })
+    );
+    scratchGround.rotation.x = -Math.PI/2;
+    scratchGround.position.set(yardCenterX, 0.015, 0);
+    scratchGround.receiveShadow = true;
+    g.add(scratchGround);
+
+    [yardCenterX-yardW/2, yardCenterX, yardCenterX+yardW/2].forEach(function(fx){
+      [-yardD/2, yardD/2].forEach(function(fz){
+        var post = cyl(0.035,0.035,0.62,0xcbb27a,6);
+        post.position.set(fx, 0.31, fz);
+        g.add(post);
+      });
+    });
+    [-yardW/2, yardW/2].forEach(function(fx){
+      [0.2,0.42].forEach(function(fy){
+        var wire = box(0.02, 0.02, yardD, 0xcbb27a, 0.6);
+        wire.position.set(yardCenterX+fx, fy, 0);
+        g.add(wire);
+      });
+    });
+    [-yardD/2, yardD/2].forEach(function(fz){
+      [0.2,0.42].forEach(function(fy){
+        var wire = box(yardW, 0.02, 0.02, 0xcbb27a, 0.6);
+        wire.position.set(yardCenterX, fy, fz);
+        g.add(wire);
+      });
+    });
+
+    var chickenColors = [0xefe6d3, 0x8a5a34, 0x3a332c, 0xefe6d3, 0x8a5a34];
+    var chickenSpots = [
+      { x:yardCenterX-0.7, z:-0.5 }, { x:yardCenterX+0.4, z:0.3 },
+      { x:yardCenterX-0.2, z:0.7 },  { x:-0.2, z:D/2+0.75 },
+      { x:0.7, z:D/2+0.95 }
+    ];
+    chickenSpots.forEach(function(spot, idx){
+      var chick = buildChicken(chickenColors[idx % chickenColors.length]);
+      chick.position.set(spot.x, 0, spot.z);
+      chick.rotation.y = Math.random() * Math.PI * 2;
+      g.add(chick);
+      poultryFlock.push({ mesh:chick, phase:Math.random()*Math.PI*2 });
+    });
+
+    /* ---- interior cutaway (hidden until "View interior" is used) ---- */
+    var interiorGroup = new THREE.Group();
+    interiorGroup.visible = false;
+
+    var footbath = cyl(0.22,0.24,0.06,COLORS.teal,14);
+    footbath.position.set(-0.9, 0.16, D/2-0.35);
+    interiorGroup.add(footbath);
+
+    var ppeBox = box(0.4,0.35,0.3,0xe5ddc8,0.8);
+    ppeBox.position.set(-1.5, 0.3, 0.7);
+    interiorGroup.add(ppeBox);
+
+    for (var fs=0; fs<3; fs++){
+      var sack = box(0.32,0.22,0.24,0xc0603a,0.9);
+      sack.position.set(-1.5, 0.13+fs*0.02, -0.7 - fs*0.28);
+      sack.rotation.y = fs*0.3;
+      interiorGroup.add(sack);
+    }
+
+    var litter = new THREE.Mesh(
+      new THREE.PlaneGeometry(2.0, D-0.3),
+      new THREE.MeshStandardMaterial({ color:0x8a7a54, roughness:1 })
+    );
+    litter.rotation.x = -Math.PI/2;
+    litter.position.set(0.2, 0.13, 0);
+    interiorGroup.add(litter);
+
+    for (var ft=-1; ft<=1; ft++){
+      var trough = cyl(0.08,0.1,0.14,0xb5651d,10);
+      trough.position.set(0.2 + ft*0.6, 0.18, 0.3);
+      interiorGroup.add(trough);
+      var line = cyl(0.09,0.09,0.1,0x9db3bb,10);
+      line.position.set(0.2 + ft*0.6, 0.16, -0.3);
+      interiorGroup.add(line);
+    }
+
+    var fanIn = cyl(0.18,0.18,0.05,0x3b464c,16);
+    fanIn.rotation.x = Math.PI/2;
+    fanIn.position.set(1.55, 1.0, 0);
+    interiorGroup.add(fanIn);
+
+    var lampWire = cyl(0.01,0.01,0.5,0x333333,4);
+    lampWire.position.set(-0.2, 1.2, 0);
+    interiorGroup.add(lampWire);
+    var lamp = new THREE.Mesh(new THREE.SphereGeometry(0.06,8,8), new THREE.MeshStandardMaterial({ color:0xffe9b0, emissive:0x554a20, roughness:0.4 }));
+    lamp.position.set(-0.2, 0.95, 0);
+    interiorGroup.add(lamp);
+
+    var recordsDesk = table(0.5, 0.4, 0.32, 0xa88a5a);
+    recordsDesk.position.set(1.5, 0, 0.7);
+    interiorGroup.add(recordsDesk);
+    var clipboard = box(0.16,0.02,0.22,0xe5ddc8,0.8);
+    clipboard.position.set(1.5, 0.41, 0.7);
+    interiorGroup.add(clipboard);
+
+    for (var bc=0; bc<3; bc++){
+      var miniBird = buildChicken([0xefe6d3,0x8a5a34,0x3a332c][bc]);
+      miniBird.scale.setScalar(0.8);
+      miniBird.position.set(0.2 + (bc-1)*0.5, 0.14, -0.15 + (bc%2)*0.2);
+      interiorGroup.add(miniBird);
+    }
+
+    g.add(interiorGroup);
+    g.userData.interiorGroup = interiorGroup;
+    g.userData.exteriorHideParts = exteriorHideParts;
+
+    registerHotspot('poultry', g);
+  })();
+
+  /* Biogas digester: concrete cylinder on a pad with joint rings, a green
+     double-membrane gas holder, inlet mixing tank, digestate outlet tank, a yellow
+     gas line with valve and gauge running to a biogas stove, and a warning sign. */
+  (function(){
+    var g = new THREE.Group();
+    var BASE = 0.08, BODYH = 1.15;
+
+    var pad = cyl(1.95, 1.95, BASE, 0xffffff, 40, 0.95);
+    pad.material.map = TEX.concrete(3, 3);
+    pad.position.y = BASE/2;
+    g.add(pad);
+
+    var body = cyl(1.0, 1.0, BODYH, 0xffffff, 40, 0.9);
+    body.material.map = TEX.concrete(7, 1);
+    body.position.y = BASE + BODYH/2;
+    g.add(body);
+
+    [0.32, 0.72].forEach(function(y){
+      var ring = new THREE.Mesh(new THREE.TorusGeometry(1.004, 0.017, 6, 48), new THREE.MeshStandardMaterial({ color:0x8e8878, roughness:0.9 }));
+      ring.rotation.x = Math.PI/2;
+      ring.position.y = BASE + y;
+      g.add(ring);
+    });
+    var beam = new THREE.Mesh(new THREE.TorusGeometry(1.0, 0.06, 8, 48), new THREE.MeshStandardMaterial({ color:0x9d9887, roughness:0.9 }));
+    beam.rotation.x = Math.PI/2;
+    beam.position.y = BASE + BODYH;
+    beam.castShadow = true;
+    g.add(beam);
+
+    var dome = new THREE.Mesh(
+      new THREE.SphereGeometry(1.0, 40, 16, 0, Math.PI*2, 0, Math.PI/2),
+      new THREE.MeshStandardMaterial({ color:0x3f8f57, roughness:0.4, metalness:0.05 })
+    );
+    dome.scale.y = 0.72;
+    dome.position.y = BASE + BODYH;
+    dome.castShadow = true;
+    g.add(dome);
+    var clamp = new THREE.Mesh(new THREE.TorusGeometry(1.0, 0.03, 6, 48), new THREE.MeshStandardMaterial({ color:0x2d3a33, roughness:0.6 }));
+    clamp.rotation.x = Math.PI/2;
+    clamp.position.y = BASE + BODYH + 0.02;
+    g.add(clamp);
+
+    var topY = BASE + BODYH + 0.72;
+    var cap = cyl(0.1, 0.12, 0.1, 0x3a3f3d, 12, 0.6);
+    cap.position.y = topY + 0.03;
+    g.add(cap);
+
+    var GAS = 0xe3b93a, GASY = topY + 0.42, STOVEX = 2.25;
+    var rise = cyl(0.04, 0.04, GASY - topY, GAS, 8, 0.5);
+    rise.position.y = (GASY + topY)/2;
+    g.add(rise);
+    var run = cyl(0.04, 0.04, STOVEX, GAS, 8, 0.5);
+    run.rotation.z = Math.PI/2;
+    run.position.set(STOVEX/2, GASY, 0);
+    g.add(run);
+    var drop = cyl(0.04, 0.04, GASY - 0.4, GAS, 8, 0.5);
+    drop.position.set(STOVEX, (GASY + 0.4)/2, 0);
+    g.add(drop);
+    [1.3, STOVEX - 0.4].forEach(function(px){
+      var support = cyl(0.03, 0.03, GASY, 0x6b5a3e, 6);
+      support.position.set(px, GASY/2, 0.0);
+      support.castShadow = false;
+      g.add(support);
+    });
+    var valve = cyl(0.1, 0.1, 0.03, 0xc0392b, 12, 0.5);
+    valve.rotation.x = Math.PI/2;
+    valve.position.set(1.05, GASY + 0.1, 0);
+    g.add(valve);
+    var gauge = cyl(0.075, 0.075, 0.03, 0xf1ecda, 14, 0.4);
+    gauge.rotation.x = Math.PI/2;
+    gauge.position.set(0.5, GASY + 0.1, 0.05);
+    g.add(gauge);
+
+    var stove = box(0.56, 0.3, 0.5, 0x50565a, 0.6);
+    stove.position.set(STOVEX, 0.23, 0);
+    g.add(stove);
+    var burner = new THREE.Mesh(new THREE.TorusGeometry(0.12, 0.025, 6, 16), new THREE.MeshStandardMaterial({ color:0x2b2b2b, roughness:0.6 }));
+    burner.rotation.x = Math.PI/2;
+    burner.position.set(STOVEX, 0.4, 0);
+    g.add(burner);
+    var flame = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.15, 8), new THREE.MeshBasicMaterial({ color:0xffa040 }));
+    flame.position.set(STOVEX, 0.48, 0);
+    g.add(flame);
+
+    var inTank = texBox(0.75, 0.55, 0.75, TEX.concrete(2, 1), 0.9);
+    inTank.position.set(-1.75, BASE + 0.275, 0.55);
+    g.add(inTank);
+    var inSlurry = new THREE.Mesh(new THREE.PlaneGeometry(0.6, 0.6), new THREE.MeshStandardMaterial({ color:0x5b4630, roughness:0.4 }));
+    inSlurry.rotation.x = -Math.PI/2;
+    inSlurry.position.set(-1.75, BASE + 0.556, 0.55);
+    g.add(inSlurry);
+    var inPipe = cyl(0.07, 0.07, 0.56, 0x6f757a, 8, 0.5);
+    inPipe.rotation.z = Math.PI/2;
+    inPipe.position.set(-1.105, 0.42, 0.55);
+    g.add(inPipe);
+
+    var outTank = texBox(1.1, 0.4, 0.85, TEX.concrete(2, 1), 0.9);
+    outTank.position.set(1.75, BASE + 0.2, -0.75);
+    g.add(outTank);
+    var outLiquid = new THREE.Mesh(new THREE.PlaneGeometry(0.94, 0.7), new THREE.MeshStandardMaterial({ color:0x6a7a36, roughness:0.3 }));
+    outLiquid.rotation.x = -Math.PI/2;
+    outLiquid.position.set(1.75, BASE + 0.404, -0.75);
+    g.add(outLiquid);
+    var outPipe = cyl(0.06, 0.06, 0.56, 0x6f757a, 8, 0.5);
+    outPipe.rotation.z = Math.PI/2;
+    outPipe.position.set(0.93, 0.33, -0.75);
+    g.add(outPipe);
+
+    var warn = signBoard('BIOGAS|NO FLAMES', 0.85, 0.46, '#e3a93a', '#0c1e17', 26);
+    warn.position.set(-0.55, 0.62, 1.62);
+    g.add(warn);
+    [-0.35, 0.35].forEach(function(dx){
+      var wp = cyl(0.03, 0.03, 0.56, 0x6b5a3e, 6);
+      wp.position.set(-0.55+dx, 0.28, 1.62);
+      g.add(wp);
+    });
+
+    registerHotspot('biogas', g);
+  })();
+
+  /* Composting bay */
+  (function(){
+    var g = new THREE.Group();
+    for (var i=-1;i<=1;i++){
+      var bin = box(0.9, 0.5, 0.9, 0x7a5a3a);
+      bin.position.set(i*1.05, 0.25, 0);
+      g.add(bin);
+      var pile = new THREE.Mesh(
+        new THREE.SphereGeometry(0.45, 10, 8),
+        new THREE.MeshStandardMaterial({ color:0x4a341f, roughness:1 })
+      );
+      pile.scale.set(1,0.55,1);
+      pile.position.set(i*1.05, 0.55, 0);
+      pile.castShadow = true;
+      g.add(pile);
+    }
+    registerHotspot('composting', g);
+  })();
+
+  /* BSF unit + buzzing points */
+  (function(){
+    var g = new THREE.Group();
+    var shed = box(1.5, 1.1, 1.2, 0x5b6b73);
+    shed.position.y = 0.55;
+    g.add(shed);
+    var roof = box(1.7, 0.12, 1.4, 0x3b464c);
+    roof.position.y = 1.16;
+    g.add(roof);
+    for (var i=0;i<3;i++){
+      var tray = box(1.2, 0.06, 0.9, 0xcbb27a);
+      tray.position.set(0, 1.3 + i*0.001, 0.85 + i*0.35);
+      g.add(tray);
+    }
+    var flyGeo = new THREE.BufferGeometry();
+    var n = 24, pts = new Float32Array(n*3);
+    for (var j=0;j<n;j++){
+      pts[j*3] = (Math.random()-0.5)*1.6;
+      pts[j*3+1] = 1.4 + Math.random()*0.5;
+      pts[j*3+2] = (Math.random()-0.5)*1.6;
+    }
+    flyGeo.setAttribute('position', new THREE.BufferAttribute(pts,3));
+    var flies = new THREE.Points(flyGeo, new THREE.PointsMaterial({ color:0x1c1c1c, size:0.045 }));
+    g.add(flies);
+    g.userData.flies = flies;
+    registerHotspot('bsf', g);
+  })();
+
+  /* Cassava plot */
+  (function(){
+    var g = new THREE.Group();
+    var soil = new THREE.Mesh(
+      new THREE.CircleGeometry(2.1, 20),
+      new THREE.MeshStandardMaterial({ color:0x5c3f26, roughness:1 })
+    );
+    soil.rotation.x = -Math.PI/2;
+    soil.position.y = 0.01;
+    soil.receiveShadow = true;
+    g.add(soil);
+    for (var r=-1;r<=1;r++){
+      for (var c=-1;c<=1;c++){
+        var stem = cyl(0.04,0.05,0.5,0x8a6a3f,6);
+        stem.position.set(r*0.65, 0.25, c*0.65);
+        g.add(stem);
+        var leafM = cone(0.28,0.55,6,0x5c9a4a);
+        leafM.position.set(r*0.65, 0.65, c*0.65);
+        g.add(leafM);
+      }
+    }
+    registerHotspot('cassava', g);
+  })();
+
+  /* Solar array */
+  (function(){
+    var g = new THREE.Group();
+    for (var i=-1;i<=1;i++){
+      var leg = cyl(0.05,0.05,0.9,0x4a4a4a,6);
+      leg.position.set(i*1.1, 0.45, 0);
+      g.add(leg);
+      var panel = box(1.0, 0.06, 1.4, 0x1f3b57, 0.35);
+      panel.position.set(i*1.1, 0.95, 0.1);
+      panel.rotation.x = -0.5;
+      g.add(panel);
+    }
+    registerHotspot('solar', g);
+  })();
+
+  /* Rainwater tank */
+  (function(){
+    var g = new THREE.Group();
+    for (var i=-1;i<=1;i+=2){
+      var leg = box(0.1,0.7,0.1,0x8a8a8a);
+      leg.position.set(i*0.35, 0.35, 0);
+      g.add(leg);
+    }
+    var tank = cyl(0.55,0.55,1.1,0x9db3bb,16);
+    tank.position.y = 1.25;
+    g.add(tank);
+    registerHotspot('rainwater', g);
+  })();
+
+  /* Biosecurity station (footbath + gate) */
+  (function(){
+    var g = new THREE.Group();
+    var bath = cyl(0.5,0.55,0.15,0x3d7ea6,14);
+    bath.position.y = 0.08;
+    g.add(bath);
+    for (var i=-1;i<=1;i+=2){
+      var post = cyl(0.05,0.05,1.4,0xcbb27a,6);
+      post.position.set(i*0.65, 0.7, 0);
+      g.add(post);
+    }
+    var bar = box(1.4,0.08,0.08,0xcbb27a);
+    bar.position.y = 1.38;
+    g.add(bar);
+    registerHotspot('biosecurity', g);
+  })();
+
+  /* Market / processing hub */
+  (function(){
+    var g = new THREE.Group();
+    var bodyLower = box(2.6, 0.3, 1.9, 0xcdbf9c, 0.85);
+    bodyLower.position.y = 0.15;
+    g.add(bodyLower);
+    var bodyUpper = box(2.6, 1.4, 1.9, 0xe7e0cd, 0.85);
+    bodyUpper.position.y = 1.0;
+    g.add(bodyUpper);
+    var roof = gableRoof(2.6, 1.9, 0.55, 0.22, 0x8a6a45);
+    roof.position.y = 1.7;
+    g.add(roof);
+    var exteriorHideParts = [roof, bodyUpper];
+    var cart = box(0.7,0.35,0.45,0xb85c3a);
+    cart.position.set(1.7,0.35,1.2);
+    g.add(cart);
+    for (var i=-1;i<=1;i+=2){
+      var wheel = cyl(0.16,0.16,0.08,0x2b2b2b,10);
+      wheel.rotation.x = Math.PI/2;
+      wheel.position.set(1.7 + i*0.2, 0.16, 1.2);
+      g.add(wheel);
+    }
+
+    /* ---- interior process journey (hidden until "View interior" is used) ---- */
+    var interiorGroup = new THREE.Group();
+    interiorGroup.visible = false;
+
+    var receivingCrates = [0,1].map(function(i){
+      var crate = box(0.26,0.18,0.26,0x8a5a34,0.9);
+      crate.position.set(-1.05, 0.09+i*0.19, -0.5+i*0.05);
+      return crate;
+    });
+    receivingCrates.forEach(function(c){ interiorGroup.add(c); });
+
+    var processingTable = table(0.5, 0.45, 0.7, 0xcfd3d4);
+    processingTable.position.set(-0.55, 0, 0);
+    interiorGroup.add(processingTable);
+
+    var coldRoom = new THREE.Mesh(
+      new THREE.BoxGeometry(0.55,0.9,0.9),
+      new THREE.MeshStandardMaterial({ color:0xbfe0e8, roughness:0.3, transparent:true, opacity:0.55 })
+    );
+    coldRoom.position.set(0.05, 0.45, 0);
+    interiorGroup.add(coldRoom);
+    var coldFrame = new THREE.Mesh(
+      new THREE.BoxGeometry(0.57,0.02,0.92),
+      new THREE.MeshStandardMaterial({ color:0x4a4a4a })
+    );
+    coldFrame.position.set(0.05, 0.9, 0);
+    interiorGroup.add(coldFrame);
+
+    var packagingTable = table(0.5, 0.4, 0.5, 0xcfc3a3);
+    packagingTable.position.set(0.6, 0, 0.35);
+    interiorGroup.add(packagingTable);
+    for (var pb=0; pb<2; pb++){
+      var pkgBox = box(0.14,0.1,0.14,0xe5ddc8,0.8);
+      pkgBox.position.set(0.55+pb*0.16, 0.45, 0.35);
+      interiorGroup.add(pkgBox);
+    }
+
+    var recordsDesk = table(0.4, 0.42, 0.32, 0xa88a5a);
+    recordsDesk.position.set(0.6, 0, -0.45);
+    interiorGroup.add(recordsDesk);
+    var recordsClip = box(0.14,0.02,0.2,0xe5ddc8,0.8);
+    recordsClip.position.set(0.6, 0.43, -0.45);
+    interiorGroup.add(recordsClip);
+
+    for (var dc=0; dc<2; dc++){
+      var dispatchCrate = box(0.3,0.2,0.3,0xb5651d,0.9);
+      dispatchCrate.position.set(1.15, 0.1+dc*0.21, -0.3+dc*0.1);
+      interiorGroup.add(dispatchCrate);
+    }
+
+    g.add(interiorGroup);
+    g.userData.interiorGroup = interiorGroup;
+    g.userData.exteriorHideParts = exteriorHideParts;
+
+    registerHotspot('market', g);
+  })();
+
+  /* Secondary school demo site: a plastered classroom block on a terrace with
+     blue trim, windows, door, verandah and roof solar, plus a small school
+     poultry run, garden beds, rainwater tank, compost bin, students and a fence. */
+  (function(){
+    var g = new THREE.Group();
+    var BASEY = 0.1, WW = 3.6, WD = 1.4, WH = 1.25, Z0 = -0.35;
+    var BLUE = 0x3d7ea6;
+
+    var terrace = texBox(5.2, BASEY, 3.0, TEX.concrete(4, 2), 0.9);
+    terrace.position.set(0, BASEY/2, 0);
+    g.add(terrace);
+
+    var plinth = box(WW+0.05, 0.22, WD+0.05, BLUE, 0.8);
+    plinth.position.set(0, BASEY+0.11, Z0);
+    g.add(plinth);
+    var wall = texBox(WW, WH-0.22, WD, TEX.plaster('#f0e7c9', 4, 1), 0.85);
+    wall.position.set(0, BASEY+0.22+(WH-0.22)/2, Z0);
+    g.add(wall);
+    var band = box(WW+0.05, 0.1, WD+0.05, BLUE, 0.8);
+    band.position.set(0, BASEY+WH-0.05, Z0);
+    g.add(band);
+
+    var roof = gableRoof(WW, WD, 0.55, 0.28, 0x4a8fb8);
+    roof.position.set(0, BASEY+WH, Z0);
+    g.add(roof);
+
+    var frontZ = Z0 + WD/2;
+    [-1.35, -0.7, 0.7, 1.35].forEach(function(wx){
+      var frame = box(0.5, 0.48, 0.05, 0xffffff, 0.6);
+      frame.position.set(wx, BASEY+0.78, frontZ+0.02);
+      g.add(frame);
+      var glass = new THREE.Mesh(new THREE.PlaneGeometry(0.4, 0.38), new THREE.MeshStandardMaterial({ color:0x9fd0e0, emissive:0x1d3a44, roughness:0.2, metalness:0.1 }));
+      glass.position.set(wx, BASEY+0.78, frontZ+0.05);
+      g.add(glass);
+      var mv = box(0.02, 0.38, 0.02, 0xffffff, 0.6);
+      mv.position.set(wx, BASEY+0.78, frontZ+0.06);
+      g.add(mv);
+      var mh = box(0.4, 0.02, 0.02, 0xffffff, 0.6);
+      mh.position.set(wx, BASEY+0.78, frontZ+0.06);
+      g.add(mh);
+    });
+    var door = box(0.5, 0.85, 0.05, 0x7a4b2a, 0.8);
+    door.position.set(0, BASEY+0.425, frontZ+0.03);
+    g.add(door);
+    var lintel = box(0.64, 0.07, 0.08, BLUE, 0.8);
+    lintel.position.set(0, BASEY+0.9, frontZ+0.04);
+    g.add(lintel);
+
+    var vRoof = texBox(WW+0.2, 0.05, 0.85, TEX.corrugated('#4a8fb8', 12), 0.5);
+    vRoof.position.set(0, BASEY+1.05, frontZ+0.42);
+    vRoof.rotation.x = 0.12;
+    g.add(vRoof);
+    for (var vc=-2; vc<=2; vc++){
+      var col = cyl(0.04, 0.04, 0.96, 0xf1ecda, 8, 0.7);
+      col.position.set(vc*0.8, BASEY+0.48, frontZ+0.8);
+      g.add(col);
+    }
+
+    var slope = Math.atan(0.55 / (WD/2 + 0.28));
+    [-1.0, 0, 1.0].forEach(function(px){
+      var panel = box(0.9, 0.04, 0.55, 0x1f3b57, 0.3);
+      panel.position.set(px, BASEY+WH+0.275+0.06*Math.cos(slope), Z0+0.49+0.06*Math.sin(slope));
+      panel.rotation.x = slope;
+      g.add(panel);
+    });
+
+    var sign = signBoard('SCHOOL DEMO SITE', 1.3, 0.34, '#122a20', '#e3a93a', 26);
+    sign.position.set(-1.95, 0.72, 1.85);
+    g.add(sign);
+    [-0.5, 0.5].forEach(function(dx){
+      var sp = cyl(0.03, 0.03, 0.62, 0x6b5a3e, 6);
+      sp.position.set(-1.95+dx, 0.31, 1.85);
+      g.add(sp);
+    });
+
+    var pole = cyl(0.025, 0.025, 2.4, 0x9c9c9c, 6);
+    pole.position.set(2.75, 1.2, -1.1);
+    g.add(pole);
+    [[0xe3a93a, 2.2], [BLUE, 1.98]].forEach(function(f){
+      var pennant = box(0.55, 0.2, 0.02, f[0], 0.7);
+      pennant.position.set(3.03, f[1], -1.1);
+      g.add(pennant);
+    });
+
+    var tank = cyl(0.3, 0.3, 0.8, 0x4a8fb8, 14, 0.5);
+    tank.position.set(-1.95, BASEY+0.4, -1.3);
+    g.add(tank);
+    var tankLid = cyl(0.32, 0.32, 0.05, 0x2f6b8e, 14, 0.5);
+    tankLid.position.set(-1.95, BASEY+0.83, -1.3);
+    g.add(tankLid);
+
+    var bin = box(0.6, 0.4, 0.6, 0x7a5a3a, 0.9);
+    bin.position.set(2.1, BASEY+0.2, -1.35);
+    g.add(bin);
+    var pile = new THREE.Mesh(new THREE.SphereGeometry(0.3, 8, 6), new THREE.MeshStandardMaterial({ color:0x4a341f, roughness:1 }));
+    pile.scale.y = 0.55; pile.position.set(2.1, BASEY+0.44, -1.35);
+    g.add(pile);
+
+    /* garden beds */
+    [-0.75, 0.0, 0.75].forEach(function(bz, bi){
+      var bed = box(1.1, 0.14, 0.5, 0x6b4a2e, 0.95);
+      bed.position.set(-3.1, 0.07, bz);
+      g.add(bed);
+      for (var pl=0; pl<4; pl++){
+        var plant = cone(0.09, 0.26, 6, bi === 1 ? 0xc9a83e : 0x5fa244);
+        plant.position.set(-3.45 + pl*0.23, 0.27, bz);
+        g.add(plant);
+      }
+    });
+
+    /* school poultry run */
+    var coopWall = texBox(1.0, 0.5, 0.8, TEX.plaster('#efe3bf', 2, 1), 0.85);
+    coopWall.position.set(3.35, 0.25, 0.0);
+    g.add(coopWall);
+    var coopRoof = gableRoof(1.0, 0.8, 0.3, 0.14, 0xd98a3d);
+    coopRoof.position.set(3.35, 0.5, 0.0);
+    g.add(coopRoof);
+    var coopDoor = box(0.24, 0.3, 0.04, 0x2b2118, 0.9);
+    coopDoor.position.set(3.35, 0.16, 0.41);
+    g.add(coopDoor);
+    var runGround = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 1.6), new THREE.MeshStandardMaterial({ color:0x8a7a54, roughness:1 }));
+    runGround.rotation.x = -Math.PI/2;
+    runGround.position.set(4.65, 0.014, 0);
+    runGround.receiveShadow = true;
+    g.add(runGround);
+    fenceRun(g, 3.9, -0.8, 5.4, -0.8, 0xcbb27a);
+    fenceRun(g, 5.4, -0.8, 5.4, 0.8, 0xcbb27a);
+    fenceRun(g, 5.4, 0.8, 3.9, 0.8, 0xcbb27a);
+    [[4.3,-0.3,0xefe6d3],[4.85,0.25,0x8a5a34],[4.55,0.5,0x3a332c]].forEach(function(c){
+      var hen = buildChicken(c[2]);
+      hen.scale.setScalar(0.85);
+      hen.position.set(c[0], 0, c[1]);
+      hen.rotation.y = Math.random()*Math.PI*2;
+      g.add(hen);
+      poultryFlock.push({ mesh:hen, phase:Math.random()*Math.PI*2 });
+    });
+
+    /* students */
+    [[-0.9,2.0,0],[-0.3,2.2,1],[0.5,2.05,2],[1.2,2.25,3],[-3.0,1.4,1],[2.7,1.1,0]].forEach(function(s, i){
+      var skins = [0x8d5a3b, 0x6b4128, 0xc68e62, 0x7a4b30];
+      var st = person(0xf6f6f6, 0x1f3550, skins[s[2] % skins.length], 1);
+      st.position.set(s[0], s[0] < -2.5 || s[0] > 2.5 ? 0.0 : 0.0, s[1]);
+      st.rotation.y = (i % 2 ? 0.4 : -0.3);
+      g.add(st);
+    });
+
+    /* compound fence with a front gate */
+    var FC = 0xe8e2cf;
+    fenceRun(g, -4.2, 2.9, -0.7, 2.9, FC);
+    fenceRun(g, 0.7, 2.9, 6.0, 2.9, FC);
+    fenceRun(g, 6.0, 2.9, 6.0, -2.3, FC);
+    fenceRun(g, 6.0, -2.3, -4.2, -2.3, FC);
+    fenceRun(g, -4.2, -2.3, -4.2, 2.9, FC);
+
+    registerHotspot('school', g);
+  })();
+
+  /* Training & learning hub: open-air pavilion with a board, benches, trainer and
+     participants, a demonstration table, and a study-tour signpost with a globe. */
+  (function(){
+    var g = new THREE.Group();
+    var BASEY = 0.1;
+    var slab = texBox(4.2, BASEY, 2.8, TEX.concrete(3, 2), 0.9);
+    slab.position.y = BASEY/2;
+    g.add(slab);
+
+    [-1.7, 0, 1.7].forEach(function(px){
+      [-1.1, 1.1].forEach(function(pz){
+        var post = box(0.1, 1.5, 0.1, 0x6b5a3e, 0.8);
+        post.position.set(px, BASEY+0.75, pz);
+        g.add(post);
+      });
+    });
+    [-1.1, 1.1].forEach(function(pz){
+      var plate = box(3.9, 0.09, 0.11, 0x5c4a34, 0.8);
+      plate.position.set(0, BASEY+1.5-0.045, pz);
+      g.add(plate);
+    });
+    var roof = gableRoof(3.9, 2.3, 0.5, 0.3, 0x4fa697);
+    roof.position.y = BASEY + 1.5;
+    g.add(roof);
+
+    var board = signBoard('CIRCULAR POULTRY|TRAINING', 1.7, 0.82, '#f4f1e6', '#1c3c2d', 28);
+    board.position.set(0, BASEY+0.98, -1.0);
+    g.add(board);
+    [-0.75, 0.75].forEach(function(dx){
+      var bp = cyl(0.03, 0.03, 0.6, 0x6b5a3e, 6);
+      bp.position.set(dx, BASEY+0.3, -1.0);
+      g.add(bp);
+    });
+
+    [[-0.9, 0.35], [0.9, 0.35], [-0.9, 0.95], [0.9, 0.95]].forEach(function(b){
+      var seat = box(1.3, 0.06, 0.26, 0xa88a5a, 0.8);
+      seat.position.set(b[0], BASEY+0.28, b[1]);
+      g.add(seat);
+      [-0.55, 0.55].forEach(function(lx){
+        var leg = box(0.06, 0.26, 0.2, 0x6b5a3e, 0.8);
+        leg.position.set(b[0]+lx, BASEY+0.13, b[1]);
+        g.add(leg);
+      });
+    });
+
+    var shirts = [0x8f7fd1, 0xe3a93a, 0x4fa697, 0xc0603a, 0xf1ecda, 0x8bbf6f, 0x4a8fb8, 0xd98a3d];
+    var skins = [0x8d5a3b, 0x6b4128, 0xc68e62, 0x7a4b30];
+    [[-1.3,0.35],[-0.6,0.35],[0.6,0.35],[1.3,0.35],[-1.3,0.95],[-0.6,0.95],[0.6,0.95],[1.3,0.95]].forEach(function(p, i){
+      var pp = person(shirts[i], 0x2f3a45, skins[i % skins.length], 0.95);
+      pp.position.set(p[0], BASEY+0.06, p[1]-0.02);
+      pp.rotation.y = Math.PI;
+      g.add(pp);
+    });
+
+    var trainer = person(0xe3a93a, 0x2f3a45, 0x8d5a3b, 1.05);
+    trainer.position.set(-0.3, BASEY, -0.55);
+    g.add(trainer);
+
+    var demo = table(1.0, 0.5, 0.4, 0xa88a5a);
+    demo.position.set(1.35, BASEY, -0.6);
+    g.add(demo);
+    var demoFeeder = cyl(0.1, 0.13, 0.16, 0xb5651d, 10);
+    demoFeeder.position.set(1.15, BASEY+0.58, -0.6);
+    g.add(demoFeeder);
+    var demoBox = box(0.22, 0.14, 0.18, 0xe5ddc8, 0.8);
+    demoBox.position.set(1.55, BASEY+0.58, -0.6);
+    g.add(demoBox);
+
+    /* study-tour signpost + globe */
+    var sp = cyl(0.05, 0.05, 2.3, 0x6b5a3e, 8);
+    sp.position.set(3.1, 1.15, 0.8);
+    g.add(sp);
+    var s1 = signBoard('PANAMA|STUDY TOUR', 0.95, 0.4, '#8f7fd1', '#0c1e17', 24);
+    s1.position.set(3.1, 2.0, 0.8);
+    s1.rotation.y = -0.6;
+    g.add(s1);
+    var s2 = signBoard('ST LUCIA / ST KITTS|EXCHANGE', 1.15, 0.4, '#f1ecda', '#1c3c2d', 20);
+    s2.position.set(3.1, 1.55, 0.8);
+    s2.rotation.y = 0.5;
+    g.add(s2);
+
+    var globeTex = canvasTex(256, 128, function(c, w, h){
+      c.fillStyle = '#2c6f9a'; c.fillRect(0, 0, w, h);
+      c.fillStyle = '#5fa050';
+      [[60,50,34,20],[120,44,22,14],[150,70,26,30],[210,52,28,16],[90,96,18,10],[230,100,14,8]].forEach(function(b){
+        c.beginPath(); c.ellipse(b[0], b[1], b[2], b[3], 0.3, 0, Math.PI*2); c.fill();
+      });
+      c.strokeStyle = 'rgba(255,255,255,0.35)'; c.lineWidth = 1;
+      for (var x=0; x<w; x+=32){ c.beginPath(); c.moveTo(x,0); c.lineTo(x,h); c.stroke(); }
+      for (var y=0; y<h; y+=32){ c.beginPath(); c.moveTo(0,y); c.lineTo(w,y); c.stroke(); }
+    });
+    var globe = new THREE.Mesh(new THREE.SphereGeometry(0.3, 20, 14), new THREE.MeshStandardMaterial({ map:globeTex, roughness:0.6 }));
+    globe.position.set(3.95, 0.72, -0.2);
+    globe.castShadow = true;
+    g.add(globe);
+    var stand = cyl(0.05, 0.08, 0.4, 0x3b3a34, 8, 0.6);
+    stand.position.set(3.95, 0.2, -0.2);
+    g.add(stand);
+    g.userData.globe = globe;
+
+    registerHotspot('training', g);
+  })();
+
+  /* ---------------- flow connections (tubes + travelling particles) ---------------- */
+  var flowItems = [];
+  CONNECTIONS.forEach(function(conn, idx){
+    var a = POS[conn.a], b = POS[conn.b];
+    var sway = conn.sway || 0;
+    var start = new THREE.Vector3(a.x, 1.1, a.z);
+    var end = new THREE.Vector3(b.x, 1.0, b.z);
+    var mid = new THREE.Vector3((a.x+b.x)/2 + sway, conn.h, (a.z+b.z)/2 + sway);
+    var curve = new THREE.QuadraticBezierCurve3(start, mid, end);
+
+    var tubeGeo = new THREE.TubeGeometry(curve, 32, 0.035, 6, false);
+    var tubeMat = new THREE.MeshBasicMaterial({ color: conn.color, transparent:true, opacity:0.28 });
+    var tube = new THREE.Mesh(tubeGeo, tubeMat);
+    scene.add(tube);
+
+    var particle = new THREE.Mesh(
+      new THREE.SphereGeometry(0.09, 8, 8),
+      new THREE.MeshBasicMaterial({ color: conn.color })
+    );
+    scene.add(particle);
+    flowItems.push({ curve: curve, mesh: particle, tube: tube, loop: conn.loop, speed: 0.09 + (idx%4)*0.015, offset: idx*0.13 });
+  });
+
+  function setLoopVisible(loopId, visible){
+    flowItems.forEach(function(fp){
+      if (fp.loop === loopId){ fp.tube.visible = visible; fp.mesh.visible = visible; }
+    });
+    applyDiagramLoopVisibility(loopId, visible);
+  }
+
+  /* ---------------- glow ring for selection ---------------- */
+  var glow = new THREE.Mesh(
+    new THREE.RingGeometry(1.0, 1.35, 32),
+    new THREE.MeshBasicMaterial({ color:0xffffff, transparent:true, opacity:0.0, side:THREE.DoubleSide })
+  );
+  glow.rotation.x = -Math.PI/2;
+  glow.position.y = 0.03;
+  scene.add(glow);
+
+  var selectedId = null;
+  var glowTargetOpacity = 0;
+  var activeCategory = null;
+
+  function metaFor(id){
+    for (var i=0;i<HOTSPOTS_META.length;i++){ if (HOTSPOTS_META[i].id === id) return HOTSPOTS_META[i]; }
+    return null;
+  }
+
+  function selectHotspot(id){
+    var meta = metaFor(id);
+    if (!meta) return;
+    if (storyActive) exitStory();
+    if (interiorMode.active) exitInterior();
+    stopSpeaking();
+    selectedId = id;
+    var pos = POS[id];
+    glow.position.set(pos.x, 0.03, pos.z);
+    glow.material.color.setHex(meta.dot);
+    glowTargetOpacity = 0.55;
+    cameraTargetGoal.set(pos.x, 0.9, pos.z);
+    if (REDUCED_MOTION) controls.target.copy(cameraTargetGoal);
+
+    document.getElementById('info-tag').innerHTML = meta.tag;
+    document.getElementById('info-tag').style.background = hex(meta.dot) + '33';
+    document.getElementById('info-tag').style.color = hex(meta.dot);
+    document.getElementById('info-badge').textContent = meta.status === 'confirmed' ? 'Confirmed' : 'Proposed ' + String.fromCharCode(8211) + ' validate';
+    document.getElementById('info-badge').className = 'badge ' + (meta.status === 'confirmed' ? 'badge-confirmed' : 'badge-proposed');
+    document.getElementById('info-activity').innerHTML = 'Activity ' + meta.relatedActivity;
+    document.getElementById('info-title').innerHTML = meta.title;
+    document.getElementById('info-desc').innerHTML = meta.desc;
+    document.getElementById('info-inputs').innerHTML = meta.inputs;
+    document.getElementById('info-outputs').innerHTML = meta.outputs;
+    document.getElementById('info-beneficiaries').innerHTML = meta.beneficiaries;
+    setInfoLabels('Inputs', 'Outputs', 'Benefits');
+    narrationText = plainText(meta.title) + '. ' + (meta.status === 'confirmed' ? 'Confirmed in the signed grant contract.' : 'Proposed concept, not yet confirmed by GCLL.') + ' ' +
+      plainText(meta.desc) + ' Inputs: ' + plainText(meta.inputs) + '. Outputs: ' + plainText(meta.outputs) + '.';
+    document.getElementById('info-interior-btn').hidden = !meta.interiorAvailable;
+    renderInfoPhotos(meta.images);
+    document.getElementById('info-card').hidden = false;
+
+    document.querySelectorAll('.legend-item').forEach(function(el){
+      el.classList.toggle('selected', el.dataset.id === id);
+    });
+    document.getElementById('hint').setAttribute('hidden','');
+    updateDiagramSelection(id);
+
+    announce(plainText(meta.title) + ' selected. ' + (meta.status === 'confirmed' ? 'Confirmed' : 'Proposed, needs validation') + '. ' + meta.category + '.');
+  }
+
+  var narrationText = '';
+  function setInfoLabels(a, b, c){
+    document.getElementById('info-dt-1').textContent = a;
+    document.getElementById('info-dt-2').textContent = b;
+    document.getElementById('info-dt-3').textContent = c;
+  }
+
+  function deselect(){
+    stopSpeaking();
+    document.getElementById('info-card').hidden = true;
+    glowTargetOpacity = 0;
+    selectedId = null;
+    narrationText = '';
+    document.querySelectorAll('.legend-item').forEach(function(el){ el.classList.remove('selected'); });
+    updateDiagramSelection(null);
+    updateNetworkSelection(null);
+  }
+
+  document.getElementById('info-close').addEventListener('click', deselect);
+
+  /* ---------------- station photos + lightbox ----------------
+     Placeholder images: generic stock photos standing in for the topic until
+     real site photos are available. Never present these as actual project photos.
+  ------------------------------------------------------------- */
+  function renderInfoPhotos(images){
+    var wrap = document.getElementById('info-photos');
+    wrap.innerHTML = '';
+    (images || []).forEach(function(img){
+      var fig = document.createElement('button');
+      fig.type = 'button';
+      fig.className = 'info-photo';
+      var pic = document.createElement('img');
+      pic.alt = img.alt;
+      pic.addEventListener('error', function(){ fig.classList.add('photo-error'); });
+      pic.src = img.url;
+      fig.appendChild(pic);
+      var tag = document.createElement('span');
+      tag.className = 'photo-tag';
+      tag.textContent = 'Generic placeholder photo';
+      fig.appendChild(tag);
+      fig.addEventListener('click', function(){ openLightbox(img); });
+      wrap.appendChild(fig);
+    });
+  }
+
+  function openLightbox(img){
+    document.getElementById('lightbox-img').src = img.url;
+    document.getElementById('lightbox-img').alt = img.alt;
+    document.getElementById('lightbox-caption').textContent = img.alt + '. Generic stock photo for illustration only - not an actual EUCaN project site. Will be replaced once real site photos are available.';
+    document.getElementById('lightbox').hidden = false;
+  }
+
+  function closeLightbox(){
+    document.getElementById('lightbox').hidden = true;
+    document.getElementById('lightbox-img').src = '';
+  }
+
+  document.getElementById('lightbox-close').addEventListener('click', closeLightbox);
+  document.getElementById('lightbox').addEventListener('click', function(ev){
+    if (ev.target.id === 'lightbox') closeLightbox();
+  });
+  document.addEventListener('keydown', function(ev){
+    if (ev.key === 'Escape' && !document.getElementById('lightbox').hidden) closeLightbox();
+  });
+
+  /* ---------------- voice narration (Web Speech API) ---------------- */
+  var voiceBtn = document.getElementById('info-voice-btn');
+  var speechSupported = ('speechSynthesis' in window);
+  if (!speechSupported) voiceBtn.hidden = true;
+
+  function stopSpeaking(){
+    if (speechSupported && window.speechSynthesis.speaking) window.speechSynthesis.cancel();
+    voiceBtn.classList.remove('active');
+    voiceBtn.textContent = 'Listen';
+    voiceBtn.setAttribute('aria-pressed','false');
+  }
+
+  voiceBtn.addEventListener('click', function(){
+    if (!speechSupported || !narrationText) return;
+    if (window.speechSynthesis.speaking){
+      stopSpeaking();
+      return;
+    }
+    var utter = new SpeechSynthesisUtterance(narrationText);
+    utter.rate = 1.0;
+    utter.onend = stopSpeaking;
+    utter.onerror = stopSpeaking;
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utter);
+    voiceBtn.classList.add('active');
+    voiceBtn.textContent = 'Stop';
+    voiceBtn.setAttribute('aria-pressed','true');
+  });
+
+  /* ---------------- category filter chips ---------------- */
+  var filterRow = document.getElementById('filter-row');
+  (function buildChips(){
+    var allChip = document.createElement('button');
+    allChip.className = 'chip active';
+    allChip.textContent = 'All';
+    allChip.dataset.cat = '';
+    allChip.setAttribute('aria-pressed','true');
+    filterRow.appendChild(allChip);
+
+    CATEGORIES.forEach(function(cat){
+      var chip = document.createElement('button');
+      chip.className = 'chip';
+      chip.textContent = cat;
+      chip.dataset.cat = cat;
+      chip.setAttribute('aria-pressed','false');
+      filterRow.appendChild(chip);
+    });
+
+    filterRow.addEventListener('click', function(ev){
+      var btn = ev.target.closest('.chip');
+      if (!btn) return;
+      if (storyActive) exitStory();
+      if (interiorMode.active) exitInterior();
+      var cat = btn.dataset.cat;
+      if (cat === '' || activeCategory === cat){
+        activeCategory = null;
+      } else {
+        activeCategory = cat;
+      }
+      filterRow.querySelectorAll('.chip').forEach(function(c){
+        var isActive = (activeCategory === null && c.dataset.cat === '') || c.dataset.cat === activeCategory;
+        c.classList.toggle('active', isActive);
+        c.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+      });
+      applyCategoryFilter();
+      announce(activeCategory ? ('Showing ' + activeCategory + ' components only.') : 'Showing all components.');
+    });
+  })();
+
+  function applyCategoryFilter(){
+    HOTSPOTS_META.forEach(function(m){
+      var matches = (activeCategory === null || m.category === activeCategory);
+      if (hotspots[m.id]) hotspots[m.id].visible = matches;
+      var row = document.querySelector('.legend-item[data-id="' + m.id + '"]');
+      if (row) row.hidden = !matches;
+      if (!matches && selectedId === m.id) deselect();
+    });
+    applyDiagramCategoryFilter();
+  }
+
+  /* ---------------- legend rail ---------------- */
+  var rail = document.getElementById('legend-rail');
+  HOTSPOTS_META.forEach(function(m){
+    var btn = document.createElement('button');
+    btn.className = 'legend-item';
+    btn.dataset.id = m.id;
+    var dotStyle = m.status === 'proposed'
+      ? 'background:transparent;border:1.5px dashed ' + hex(m.dot) + ';'
+      : 'background:' + hex(m.dot) + ';';
+    btn.innerHTML =
+      '<span class="legend-dot" style="' + dotStyle + '"></span>' +
+      '<span>' + m.title + '</span>' +
+      '<span class="li-tag">' + m.tag + '</span>';
+    btn.addEventListener('click', function(){ selectHotspot(m.id); });
+    rail.appendChild(btn);
+  });
+
+  /* ---------------- flows drawer ---------------- */
+  var flowList = document.getElementById('flow-list');
+  var loopVisibility = {};
+  LOOPS.forEach(function(loop){
+    loopVisibility[loop.id] = true;
+    var row = document.createElement('label');
+    row.className = 'flow-row';
+    row.innerHTML =
+      '<input type="checkbox" checked data-loop="' + loop.id + '">' +
+      '<span class="flow-swatch" style="background:' + hex(loop.color) + '"></span>' +
+      '<span class="flow-label">' + loop.label + '</span>' +
+      '<span class="badge ' + (loop.status === 'confirmed' ? 'badge-confirmed' : 'badge-proposed') + '">' +
+        (loop.status === 'confirmed' ? 'Confirmed' : 'Proposed') + '</span>';
+    flowList.appendChild(row);
+  });
+  flowList.addEventListener('change', function(ev){
+    var input = ev.target;
+    if (input && input.dataset && input.dataset.loop){
+      loopVisibility[input.dataset.loop] = input.checked;
+      setLoopVisible(input.dataset.loop, input.checked);
+      var loopMeta = LOOPS.filter(function(l){ return l.id === input.dataset.loop; })[0];
+      announce((loopMeta ? loopMeta.label.replace(/&amp;/g,'&') : input.dataset.loop) + (input.checked ? ' shown.' : ' hidden.'));
+    }
+  });
+
+  /* ---------------- 2D circular loop diagram (WebGL fallback / lightweight alt view) ---------------- */
+  var diagramWrap = document.getElementById('diagram-wrap');
+  var diagramSvgNS = 'http://www.w3.org/2000/svg';
+  var diagramSize = 640;
+  var diagramCenter = diagramSize / 2;
+  var diagramRadius = 230;
+  var diagramNodePos = {};
+  var diagramEdgeEls = [];
+  var diagramNodeEls = {};
+
+  (function buildDiagram(){
+    var svg = document.createElementNS(diagramSvgNS, 'svg');
+    svg.setAttribute('viewBox', '0 0 ' + diagramSize + ' ' + diagramSize);
+    svg.setAttribute('role', 'img');
+    svg.setAttribute('aria-label', 'Simplified circular-loop diagram of the poultry cooperative system');
+
+    HOTSPOTS_META.forEach(function(m, i){
+      var angle = (i / HOTSPOTS_META.length) * Math.PI * 2 - Math.PI / 2;
+      diagramNodePos[m.id] = {
+        x: diagramCenter + diagramRadius * Math.cos(angle),
+        y: diagramCenter + diagramRadius * Math.sin(angle)
+      };
+    });
+
+    var outerRing = document.createElementNS(diagramSvgNS, 'circle');
+    outerRing.setAttribute('cx', diagramCenter); outerRing.setAttribute('cy', diagramCenter);
+    outerRing.setAttribute('r', diagramRadius);
+    outerRing.setAttribute('fill', 'none'); outerRing.setAttribute('stroke', '#2a4636'); outerRing.setAttribute('stroke-width', '1');
+    svg.appendChild(outerRing);
+
+    CONNECTIONS.forEach(function(conn){
+      var a = diagramNodePos[conn.a], b = diagramNodePos[conn.b];
+      if (!a || !b) return;
+      var midX = (a.x + b.x) / 2 + (diagramCenter - (a.x + b.x) / 2) * 0.5;
+      var midY = (a.y + b.y) / 2 + (diagramCenter - (a.y + b.y) / 2) * 0.5;
+      var path = document.createElementNS(diagramSvgNS, 'path');
+      path.setAttribute('d', 'M ' + a.x + ' ' + a.y + ' Q ' + midX + ' ' + midY + ' ' + b.x + ' ' + b.y);
+      path.setAttribute('fill', 'none');
+      path.setAttribute('stroke', hex(conn.color));
+      path.setAttribute('stroke-width', '2');
+      path.setAttribute('stroke-opacity', '0.55');
+      path.setAttribute('class', 'diagram-edge');
+      path.dataset.loop = conn.loop;
+      svg.appendChild(path);
+      diagramEdgeEls.push(path);
+    });
+
+    HOTSPOTS_META.forEach(function(m){
+      var p = diagramNodePos[m.id];
+      var g = document.createElementNS(diagramSvgNS, 'g');
+      g.setAttribute('class', 'diagram-node');
+      g.setAttribute('transform', 'translate(' + p.x + ',' + p.y + ')');
+      g.setAttribute('tabindex', '0');
+      g.setAttribute('role', 'button');
+      g.dataset.id = m.id;
+      g.dataset.category = m.category;
+
+      var ring = document.createElementNS(diagramSvgNS, 'circle');
+      ring.setAttribute('class', 'node-ring');
+      ring.setAttribute('r', '20');
+      ring.setAttribute('fill', '#122a20');
+      ring.setAttribute('stroke', hex(m.dot));
+      ring.setAttribute('stroke-width', '2');
+      if (m.status === 'proposed') ring.setAttribute('stroke-dasharray', '4 3');
+      g.appendChild(ring);
+
+      var dot = document.createElementNS(diagramSvgNS, 'circle');
+      dot.setAttribute('r', '6');
+      dot.setAttribute('fill', hex(m.dot));
+      g.appendChild(dot);
+
+      var isRight = p.x >= diagramCenter;
+      var isTop = p.y < diagramCenter;
+      var label = document.createElementNS(diagramSvgNS, 'text');
+      label.setAttribute('class', 'node-label');
+      label.setAttribute('x', isRight ? 28 : -28);
+      label.setAttribute('y', isTop ? -4 : 8);
+      label.setAttribute('text-anchor', isRight ? 'start' : 'end');
+      label.setAttribute('fill', '#f1ecda');
+      label.setAttribute('font-size', '12');
+      label.setAttribute('font-weight', '700');
+      label.innerHTML = m.title;
+      g.appendChild(label);
+
+      g.addEventListener('click', function(){ selectHotspot(m.id); });
+      g.addEventListener('keydown', function(ev){
+        if (ev.key === 'Enter' || ev.key === ' '){ ev.preventDefault(); selectHotspot(m.id); }
+      });
+      svg.appendChild(g);
+      diagramNodeEls[m.id] = g;
+    });
+
+    diagramWrap.appendChild(svg);
+  })();
+
+  function updateDiagramSelection(id){
+    Object.keys(diagramNodeEls).forEach(function(key){
+      diagramNodeEls[key].classList.toggle('selected', key === id);
+    });
+  }
+
+  function applyDiagramCategoryFilter(){
+    Object.keys(diagramNodeEls).forEach(function(key){
+      var el = diagramNodeEls[key];
+      var matches = (activeCategory === null || el.dataset.category === activeCategory);
+      el.classList.toggle('dimmed', !matches);
+    });
+  }
+
+  function applyDiagramLoopVisibility(loopId, visible){
+    diagramEdgeEls.forEach(function(el){
+      if (el.dataset.loop === loopId) el.classList.toggle('dimmed', !visible);
+    });
+  }
+
+  /* ---------------- Grenada network view ----------------
+     A schematic map of Grenada, Carriacou and Petite Martinique showing how the
+     three cooperatives, 10 farm installations, 5 school installations, the
+     processing hub, buyers, institutions and the learning routes (including the
+     Panama study visit) connect. The islands are hand-simplified outlines; every
+     site position is illustrative until GCLL confirms locations.
+  ---------------------------------------------------------------- */
+  var viewMode = '3d';
+  var networkWrap = document.getElementById('network-wrap');
+  var NET = { lon0:-61.86, lat0:12.42, kx:1280, ky:1300, ox:110, oy:95, gap:0.13 };
+  function netProj(ll){ var lat = ll[1] > 12.3 ? ll[1] - NET.gap : ll[1]; return { x: NET.ox + (ll[0] - NET.lon0) * NET.kx, y: NET.oy + (NET.lat0 - lat) * NET.ky }; }
+
+  var NET_ISLANDS = [
+    { name:'GRENADA', label:[-61.832, 12.135], pts:[[-61.640,12.238],[-61.618,12.225],[-61.600,12.205],[-61.596,12.175],[-61.603,12.145],[-61.612,12.115],[-61.620,12.085],[-61.625,12.055],[-61.618,12.030],[-61.605,12.012],[-61.625,11.998],[-61.660,11.992],[-61.700,11.993],[-61.740,11.997],[-61.775,12.000],[-61.792,12.012],[-61.790,12.035],[-61.775,12.055],[-61.762,12.085],[-61.752,12.115],[-61.745,12.145],[-61.740,12.175],[-61.725,12.205],[-61.690,12.230]] },
+    { name:'CARRIACOU', label:[-61.545, 12.405], pts:[[-61.472,12.520],[-61.455,12.530],[-61.435,12.522],[-61.418,12.500],[-61.420,12.470],[-61.432,12.448],[-61.452,12.430],[-61.475,12.435],[-61.490,12.455],[-61.495,12.485]] },
+    { name:'PETITE MARTINIQUE', label:[-61.352, 12.565], pts:[[-61.390,12.535],[-61.372,12.532],[-61.362,12.515],[-61.375,12.502],[-61.392,12.510]] }
+  ];
+  var NET_PARISHES = [
+    ['ST PATRICK',[-61.668,12.212]], ['ST MARK',[-61.727,12.192]], ['ST JOHN',[-61.722,12.152]],
+    ['ST ANDREW',[-61.632,12.135]], ['ST GEORGE',[-61.712,12.062]], ['ST DAVID',[-61.658,12.012]]
+  ];
+
+  var ILLUS = ' Map position is illustrative until GCLL confirms locations.';
+  var NET_NODES = [];
+  function addNode(n){ NET_NODES.push(n); return n; }
+
+  addNode({ id:'gcll', type:'hq', ll:[-61.742,12.070], color:COLORS.gold, layers:['learning','partners'], status:'confirmed',
+    title:'GCLL &mdash; national knowledge hub', tag:'Implementer', activity:'all activities', illustrative:true, label:'GCLL (Belmont)', side:'left',
+    desc:'Grenada Co-operative League Ltd., Belmont, St George, runs the action. It organises the trainings, coaching visits and the study visit, and keeps the knowledge afterwards as the cooperative sector&rsquo;s national hub.' + ILLUS,
+    role:'Grant implementer and national knowledge hub', connects:'3 cooperatives, 15 installation sites, institutional partners, the Panama host cooperative, regional partners',
+    source:'Contract page 1 and Annex I, Activity A2 (study visit)' });
+
+  var coopDefs = [
+    { id:'coop1', ll:[-61.660,12.160], n:1 }, { id:'coop2', ll:[-61.690,12.030], n:2 }, { id:'coop3', ll:[-61.455,12.480], n:3 }
+  ];
+  coopDefs.forEach(function(c){
+    addNode({ id:c.id, type:'coop', ll:c.ll, color:COLORS.leaf, layers:['value','learning','partners'], status:'confirmed',
+      title:'Participating cooperative ' + c.n, tag:'Cooperative', activity:'A1', illustrative:true, label:'Cooperative ' + c.n, side:'right',
+      desc:'One of three existing registered cooperatives strengthened by the action &mdash; no new cooperatives are created. They are chosen through an open expression of interest against transparent criteria, including geographic representation across Grenada, Carriacou and Petite Martinique. Name and location are placeholders.' + ILLUS,
+      role:'Primary implementation partner; hosts member-farm installations', connects:'Its member farms, the processing hub, nearby schools, neighbouring smallholders, GCLL',
+      source:'Contract Annex I, Activity A1 Steps 1&ndash;2 (pp. 26&ndash;27)' });
+  });
+
+  var farmDefs = [
+    { ll:[-61.665,12.195], c:'coop1' }, { ll:[-61.630,12.140], c:'coop1' }, { ll:[-61.715,12.150], c:'coop1' },
+    { ll:[-61.650,12.088], c:'coop2' }, { ll:[-61.665,12.010], c:'coop2' }, { ll:[-61.740,12.010], c:'coop2' },
+    { ll:[-61.470,12.505], c:'coop3' }, { ll:[-61.435,12.470], c:'coop3' }, { ll:[-61.450,12.440], c:'coop3' },
+    { ll:[-61.380,12.520], c:'coop3' }
+  ];
+  farmDefs.forEach(function(f, i){
+    addNode({ id:'farm' + (i+1), type:'farm', ll:f.ll, color:COLORS.teal, layers:['value','learning'], status:'confirmed', parent:f.c,
+      title:'Demonstration farm ' + (i+1) + ' of 10', tag:'Farm installation', activity:'A1', illustrative:true,
+      desc:'One of 10 installations at farms run by members of the participating cooperatives. Each gets a site-specific package &mdash; for example biogas, Black Soldier Fly unit, composting, organic fertiliser, cassava feed demonstration, solar where feasible. Not every site gets the same equipment. The distribution across islands is not fixed.' + ILLUS,
+      role:'Demonstration and peer-learning site', connects:'Its parent cooperative, the processing hub, neighbouring smallholders',
+      source:'Contract Annex I, Activity A1 Steps 2&ndash;3 (pp. 26, 28)' });
+  });
+
+  var schoolDefs = [
+    { ll:[-61.700,12.185], c:'coop1' }, { ll:[-61.615,12.110], c:'coop1' }, { ll:[-61.655,12.040], c:'coop2' },
+    { ll:[-61.625,12.020], c:'coop2' }, { ll:[-61.487,12.470], c:'coop3' }
+  ];
+  schoolDefs.forEach(function(s, i){
+    addNode({ id:'school' + (i+1), type:'school', ll:s.ll, color:COLORS.amber, layers:['learning'], status:'confirmed', parent:s.c,
+      title:'School installation ' + (i+1) + ' of 5', tag:'School installation', activity:'A1 &middot; A2', illustrative:true,
+      desc:'One of five installations planned at selected secondary schools that already run poultry programmes. They add hands-on learning for students and act as community training and knowledge-sharing centres. Schools are not yet named.' + ILLUS,
+      role:'Student learning and community knowledge-sharing centre', connects:'Nearby cooperative, GCLL trainers, neighbouring farmers',
+      source:'Contract Annex I, Activity A1 (p. 26) and A2 (p. 31)' });
+  });
+
+  [
+    { id:'out1', ll:[-61.618,12.190], c:'coop1', n:1 }, { id:'out2', ll:[-61.632,12.068], c:'coop2', n:2 }, { id:'out3', ll:[-61.464,12.436], c:'coop3', n:3 }
+  ].forEach(function(o){
+    addNode({ id:o.id, type:'outreach', ll:o.ll, color:COLORS.cream, layers:['value','learning'], status:'confirmed', parent:o.c,
+      title:'Neighbouring smallholder farms (area ' + o.n + ')', tag:'Replication', activity:'A2', illustrative:true, label:'Smallholders', side:'right',
+      desc:'The wider group of smallholder poultry farmers &mdash; about 120 people in the target, including 48 women and 24 young people (18&ndash;35) &mdash; who learn from the demonstration sites through trainings, demonstration sessions and coaching visits. The action aims for 70% adoption of at least one promoted circular practice. Groupings shown are illustrative.' + ILLUS,
+      role:'Farmers reached by training and peer learning', connects:'The nearest cooperative and demonstration farms',
+      source:'Contract Annex I, target group and indicators (pp. 10, 19&ndash;20)' });
+  });
+
+  addNode({ id:'hub', type:'hub', ll:[-61.685,12.078], color:COLORS.cream, layers:['value'], status:'confirmed',
+    title:'Processing &amp; market hub', tag:'Value chain', activity:'A3', illustrative:true, label:'Processing & market', side:'right',
+    desc:'Cooperative-run processing, packaging and quality assurance turn farm output into market-ready products (Activity A3). Whether this is one shared hub or several upgraded facilities is not fixed &mdash; shown here as a single node for illustration.' + ILLUS,
+    role:'Aggregation, processing, packaging, quality assurance', connects:'The three cooperatives and their farms; buyers under 3 supply agreements',
+    source:'Contract Annex I, Activity A3 and indicator 1.2.1 (pp. 20, 34&ndash;36)' });
+  addNode({ id:'buyers', type:'buyer', ll:[-61.776,12.022], color:COLORS.gold, layers:['value','partners'], status:'confirmed',
+    title:'Buyers &mdash; 3 supply agreements', tag:'Market access', activity:'A3', illustrative:true, label:'Buyers', side:'left',
+    desc:'The action targets 3 supply agreements between cooperatives and buyers such as hotels, supermarkets and institutions. Buyers are not yet named.' + ILLUS,
+    role:'Formal offtake for cooperative products', connects:'The processing hub and cooperatives',
+    source:'Contract indicator 1.2.1 (p. 20) and Activity A3' });
+  addNode({ id:'inst', type:'inst', ll:[-61.752,12.040], color:0x7fb2d6, layers:['partners'], status:'confirmed',
+    title:'Institutional partners &mdash; 3 MoUs', tag:'Partnerships', activity:'A1 &middot; A3', illustrative:true, label:'Institutions', side:'left',
+    desc:'Delivery is coordinated with the Ministry of Agriculture, Lands and Forestry, the Cooperative Division and the Ministry of Education. The action targets 3 MoUs between cooperatives and institutional partners; the signatories are not yet named.' + ILLUS,
+    role:'Site selection, technical support, policy backing', connects:'GCLL and the three cooperatives',
+    source:'Contract Annex I, Activity A1 (p. 27) and indicator 1.2.1 (p. 20)' });
+
+  addNode({ id:'panama', type:'partner', pos:{ x:70, y:688 }, color:COLORS.violet, layers:['learning'], status:'confirmed', special:true,
+    title:'Study visit &mdash; Cooperativa Juan XXIII, Panama', tag:'Study tour', activity:'A2 Step 4', illustrative:false, label:'Panama study visit', side:'right',
+    desc:'One international study visit takes a small delegation from Grenada&rsquo;s cooperative sector to Cooperativa de Servicios M&uacute;ltiples Juan XXIII, R.L. in Santiago de Veraguas &mdash; described as one of the most advanced poultry cooperative systems in Latin America. Focus: biosecurity, animal health, housing, feed, hatchery and breeder flocks, processing and HACCP, governance and traceability. The contract states six participants in one place and lists eight in another &mdash; GCLL to confirm the final delegation.',
+    role:'Host cooperative for the international study visit', connects:'GCLL, cooperative leaders and project staff; lessons return through GCLL to all cooperatives',
+    source:'Contract Annex I, Activity A2 Step 4 (pp. 32&ndash;33) and indicator 1.3.2 (p. 20)' });
+  addNode({ id:'stlucia', type:'partner', pos:{ x:150, y:44 }, color:COLORS.violet, layers:['learning','partners'], status:'confirmed',
+    title:'Saint Lucia &mdash; regional exchange', tag:'Regional partner', activity:'A1 &middot; A4', illustrative:false, label:'Saint Lucia', side:'right',
+    desc:'Regional partners in Saint Lucia take part through knowledge exchange, dissemination of results and access to the manuals, guidelines and lessons learned. Pilot installations are only in Grenada, Carriacou and Petite Martinique.',
+    role:'Knowledge-exchange partner', connects:'GCLL and the cooperative networks',
+    source:'Contract Annex I, Activity A1 (p. 27) and p. 34' });
+  addNode({ id:'stkitts', type:'partner', pos:{ x:330, y:44 }, color:COLORS.violet, layers:['learning','partners'], status:'confirmed',
+    title:'Saint Kitts &amp; Nevis &mdash; regional exchange', tag:'Regional partner', activity:'A1 &middot; A4', illustrative:false, label:'Saint Kitts & Nevis', side:'right',
+    desc:'Regional partners in Saint Kitts and Nevis take part through knowledge exchange, dissemination of results and access to the manuals, guidelines and lessons learned. Pilot installations are only in Grenada, Carriacou and Petite Martinique.',
+    role:'Knowledge-exchange partner', connects:'GCLL and the cooperative networks',
+    source:'Contract Annex I, Activity A1 (p. 27) and p. 34' });
+
+  var NET_BY_ID = {};
+  NET_NODES.forEach(function(n){
+    n.p = n.pos || netProj(n.ll);
+    NET_BY_ID[n.id] = n;
+  });
+
+  var NET_LINKS = [];
+  function addLink(a, b, layers, kind, curv, label){ NET_LINKS.push({ a:a, b:b, layers:layers, kind:kind, curv:curv || 0.14, label:label || '' }); }
+  NET_NODES.filter(function(n){ return n.type === 'farm'; }).forEach(function(n){ addLink(n.id, n.parent, ['value'], 'value', 0.1); });
+  ['coop1','coop2','coop3'].forEach(function(c, i){
+    addLink(c, 'hub', ['value'], 'value', i === 2 ? 0.16 : 0.12);
+    addLink('gcll', c, ['learning'], 'learning', 0.16);
+    addLink(c, 'inst', ['partners'], 'partner', 0.12);
+    addLink('out' + (i+1), c, ['learning'], 'learning', 0.1);
+  });
+  NET_NODES.filter(function(n){ return n.type === 'school'; }).forEach(function(n){ addLink(n.parent, n.id, ['learning'], 'learning', 0.1); });
+  addLink('hub', 'buyers', ['value','partners'], 'value', 0.14);
+  addLink('gcll', 'inst', ['partners'], 'partner', 0.1);
+  addLink('gcll', 'panama', ['learning'], 'study', 0.32, 'Study visit');
+  addLink('gcll', 'stlucia', ['learning','partners'], 'learning', -0.2, 'Exchange');
+  addLink('gcll', 'stkitts', ['learning','partners'], 'learning', -0.13);
+
+  var NET_LAYERS = [
+    { id:'all', label:'All' }, { id:'value', label:'Value chain' }, { id:'learning', label:'Training & learning' }, { id:'partners', label:'Partnerships' }
+  ];
+  var netLayer = 'all';
+  var selectedNetId = null;
+  var netNodeEls = {}, netLinkEls = [], netLabelEls = {};
+
+  function svgEl(name, attrs){
+    var el = document.createElementNS(diagramSvgNS, name);
+    Object.keys(attrs || {}).forEach(function(k){ el.setAttribute(k, attrs[k]); });
+    return el;
+  }
+  function smoothClosed(pts){
+    var n = pts.length, mid = function(a, b){ return { x:(a.x+b.x)/2, y:(a.y+b.y)/2 }; };
+    var d = 'M ' + mid(pts[n-1], pts[0]).x + ' ' + mid(pts[n-1], pts[0]).y;
+    for (var i = 0; i < n; i++){
+      var m = mid(pts[i], pts[(i+1) % n]);
+      d += ' Q ' + pts[i].x + ' ' + pts[i].y + ' ' + m.x + ' ' + m.y;
+    }
+    return d + ' Z';
+  }
+
+  (function buildNetwork(){
+    var svg = svgEl('svg', { viewBox:'0 0 860 720', preserveAspectRatio:'xMidYMid meet', role:'group', 'aria-label':'Schematic map of Grenada, Carriacou and Petite Martinique showing cooperative, farm, school, market and learning connections' });
+
+    var defs = svgEl('defs');
+    var marker = svgEl('marker', { id:'net-arrow', viewBox:'0 0 10 10', refX:'8', refY:'5', markerWidth:'7', markerHeight:'7', orient:'auto-start-reverse' });
+    marker.appendChild(svgEl('path', { d:'M 0 0 L 10 5 L 0 10 z', fill:hex(COLORS.violet) }));
+    defs.appendChild(marker);
+    svg.appendChild(defs);
+
+    NET_ISLANDS.forEach(function(isl){
+      var pts = isl.pts.map(netProj);
+      svg.appendChild(svgEl('path', { d:smoothClosed(pts), fill:'#2f5b3a', stroke:'#8fc5a0', 'stroke-width':'2', 'stroke-opacity':'0.55', 'stroke-linejoin':'round' }));
+      var lp = netProj(isl.label);
+      var t = svgEl('text', { x:lp.x, y:lp.y, fill:'#f1ecda', 'fill-opacity':'0.4', 'font-size': isl.name === 'GRENADA' ? '20' : '13', 'font-weight':'700', 'letter-spacing':'0.16em', 'text-anchor': isl.name === 'PETITE MARTINIQUE' ? 'end' : 'middle' });
+      t.textContent = isl.name;
+      svg.appendChild(t);
+    });
+    NET_PARISHES.forEach(function(p){
+      var pp = netProj(p[1]);
+      var t = svgEl('text', { x:pp.x, y:pp.y, fill:'#f1ecda', 'fill-opacity':'0.22', 'font-size':'8', 'letter-spacing':'0.12em', 'text-anchor':'middle' });
+      t.textContent = p[0];
+      svg.appendChild(t);
+    });
+
+    var linkLayer = svgEl('g'), nodeLayer = svgEl('g'), labelLayer = svgEl('g');
+    svg.appendChild(linkLayer); svg.appendChild(nodeLayer); svg.appendChild(labelLayer);
+
+    NET_LINKS.forEach(function(l){
+      var a = NET_BY_ID[l.a].p, b = NET_BY_ID[l.b].p;
+      var mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+      var dx = b.x - a.x, dy = b.y - a.y, len = Math.sqrt(dx*dx + dy*dy) || 1;
+      var cx = mx + (-dy / len) * l.curv * len, cy = my + (dx / len) * l.curv * len;
+      var color = l.kind === 'value' ? '#a9d58a' : (l.kind === 'partner' ? '#e3a93a' : '#a99be6');
+      var attrs = { d:'M ' + a.x + ' ' + a.y + ' Q ' + cx + ' ' + cy + ' ' + b.x + ' ' + b.y, stroke:color, 'stroke-width': l.kind === 'study' ? '3.2' : '1.8', 'stroke-opacity': l.kind === 'study' ? '0.95' : '0.75' };
+      if (l.kind === 'learning') attrs['stroke-dasharray'] = '3 7';
+      else if (l.kind === 'partner') attrs['stroke-dasharray'] = '1 6';
+      else if (l.kind === 'study') { attrs['stroke-dasharray'] = '10 8'; attrs['marker-end'] = 'url(#net-arrow)'; }
+      else attrs['stroke-dasharray'] = '7 7';
+      var path = svgEl('path', attrs);
+      path.setAttribute('class', 'net-link flow');
+      linkLayer.appendChild(path);
+      netLinkEls.push({ el:path, layers:l.layers });
+      if (l.label){
+        var lbl = svgEl('text', { x:cx, y:cy - 6, fill:'#d9d0ff', 'font-size':'11', 'font-weight':'700', 'text-anchor':'middle' });
+        lbl.textContent = l.label;
+        lbl.setAttribute('class', 'net-label');
+        labelLayer.appendChild(lbl);
+        netLinkEls.push({ el:lbl, layers:l.layers });
+      }
+    });
+
+    NET_NODES.forEach(function(n){
+      var g = svgEl('g', { transform:'translate(' + n.p.x + ',' + n.p.y + ')', tabindex:'0', role:'button', 'aria-label':plainText(n.title) });
+      g.setAttribute('class', 'net-node');
+      var col = hex(n.color);
+      var dash = n.illustrative ? '4 3' : null;
+      var ring;
+      if (n.type === 'hq'){
+        ring = svgEl('polygon', { points:'0,-17 17,0 0,17 -17,0', fill:'#122a20', stroke:col, 'stroke-width':'2.5' });
+      } else if (n.type === 'school'){
+        ring = svgEl('rect', { x:-7, y:-7, width:14, height:14, rx:2, fill:col, 'fill-opacity':'0.25', stroke:col, 'stroke-width':'2' });
+      } else if (n.type === 'hub'){
+        ring = svgEl('rect', { x:-12, y:-12, width:24, height:24, rx:5, fill:'#122a20', stroke:col, 'stroke-width':'2.5' });
+      } else if (n.type === 'outreach'){
+        ring = svgEl('circle', { r:17, fill:col, 'fill-opacity':'0.08', stroke:col, 'stroke-width':'1.8' });
+      } else if (n.type === 'farm'){
+        ring = svgEl('circle', { r:6.5, fill:col, 'fill-opacity':'0.3', stroke:col, 'stroke-width':'2' });
+      } else {
+        ring = svgEl('circle', { r: n.type === 'coop' ? 14 : 12, fill:'#122a20', stroke:col, 'stroke-width':'2.5' });
+      }
+      ring.setAttribute('class', 'net-ring');
+      if (dash) ring.setAttribute('stroke-dasharray', dash);
+      g.appendChild(ring);
+      if (n.type === 'coop' || n.type === 'hq' || n.type === 'partner' || n.type === 'buyer' || n.type === 'inst'){
+        g.appendChild(svgEl('circle', { r:4.5, fill:col }));
+      } else if (n.type === 'hub'){
+        g.appendChild(svgEl('rect', { x:-5, y:-5, width:10, height:10, rx:1.5, fill:col }));
+      }
+      var tt = svgEl('title'); tt.textContent = plainText(n.title); g.appendChild(tt);
+      g.addEventListener('click', function(){ selectNetworkNode(n.id); });
+      g.addEventListener('keydown', function(ev){ if (ev.key === 'Enter' || ev.key === ' '){ ev.preventDefault(); selectNetworkNode(n.id); } });
+      nodeLayer.appendChild(g);
+      netNodeEls[n.id] = { el:g, layers:n.layers };
+
+      if (n.label){
+        var right = n.side !== 'left';
+        var off = n.type === 'coop' ? 22 : 20;
+        var lab = svgEl('text', { x:n.p.x + (right ? off : -off), y:n.p.y + 4, fill:'#f1ecda', 'font-size':'11.5', 'font-weight':'700', 'text-anchor': right ? 'start' : 'end' });
+        lab.setAttribute('class', 'net-label');
+        lab.textContent = n.label;
+        labelLayer.appendChild(lab);
+        netLabelEls[n.id] = { el:lab, layers:n.layers };
+      }
+    });
+
+    var key = svgEl('g', { transform:'translate(612,318)' });
+    var rows = [
+      ['coop', 'Cooperative (3)'], ['farm', 'Demonstration farm (10)'], ['school', 'School installation (5)'],
+      ['hq', 'GCLL, national hub'], ['hub', 'Processing & market hub'], ['outreach', 'Smallholder farms nearby']
+    ];
+    key.appendChild(svgEl('rect', { x:-14, y:-22, width:240, height:rows.length * 22 + 44, rx:10, fill:'#08181d', 'fill-opacity':'0.6' }));
+    rows.forEach(function(r, i){
+      var y = i * 22;
+      var g = svgEl('g', { transform:'translate(0,' + y + ')' });
+      var shape;
+      if (r[0] === 'school') shape = svgEl('rect', { x:-5, y:-5, width:10, height:10, rx:1.5, fill:hex(COLORS.amber), 'fill-opacity':'0.3', stroke:hex(COLORS.amber), 'stroke-width':'1.6' });
+      else if (r[0] === 'hq') shape = svgEl('polygon', { points:'0,-7 7,0 0,7 -7,0', fill:'none', stroke:hex(COLORS.gold), 'stroke-width':'1.8' });
+      else if (r[0] === 'hub') shape = svgEl('rect', { x:-6, y:-6, width:12, height:12, rx:3, fill:'none', stroke:hex(COLORS.cream), 'stroke-width':'1.8' });
+      else if (r[0] === 'outreach') shape = svgEl('circle', { r:7, fill:'none', stroke:hex(COLORS.cream), 'stroke-width':'1.4', 'stroke-dasharray':'3 2' });
+      else shape = svgEl('circle', { r: r[0] === 'coop' ? 7 : 5, fill:'none', stroke:hex(r[0] === 'coop' ? COLORS.leaf : COLORS.teal), 'stroke-width':'1.8' });
+      g.appendChild(shape);
+      var tx = svgEl('text', { x:18, y:4, fill:'#f1ecda', 'fill-opacity':'0.85', 'font-size':'10.5' });
+      tx.textContent = r[1];
+      g.appendChild(tx);
+      key.appendChild(g);
+    });
+    var ly = rows.length * 22;
+    [['#a9d58a','7 7','Products and produce'], ['#a99be6','3 7','Training and learning'], ['#e3a93a','1 6','MoUs, supply agreements']].forEach(function(r, i){
+      var g = svgEl('g', { transform:'translate(0,' + (ly + i * 20) + ')' });
+      g.appendChild(svgEl('line', { x1:-8, y1:0, x2:10, y2:0, stroke:r[0], 'stroke-width':'2', 'stroke-dasharray':r[1], 'stroke-linecap':'round' }));
+      var tx = svgEl('text', { x:18, y:4, fill:'#f1ecda', 'fill-opacity':'0.85', 'font-size':'10.5' });
+      tx.textContent = r[2];
+      g.appendChild(tx);
+      key.appendChild(g);
+    });
+    key.firstChild.setAttribute('height', String(rows.length * 22 + 3 * 20 + 26));
+    svg.appendChild(key);
+    networkWrap.appendChild(svg);
+  })();
+
+  (function buildLayerChips(){
+    var row = document.getElementById('net-layers');
+    NET_LAYERS.forEach(function(l){
+      var b = document.createElement('button');
+      b.className = 'chip' + (l.id === 'all' ? ' active' : '');
+      b.dataset.layer = l.id;
+      b.textContent = l.label;
+      b.setAttribute('aria-pressed', l.id === 'all' ? 'true' : 'false');
+      row.appendChild(b);
+    });
+    row.addEventListener('click', function(ev){
+      var btn = ev.target.closest('.chip');
+      if (!btn) return;
+      netLayer = btn.dataset.layer;
+      row.querySelectorAll('.chip').forEach(function(c){
+        var on = c.dataset.layer === netLayer;
+        c.classList.toggle('active', on);
+        c.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+      if (selectedNetId && !inNetLayer(NET_BY_ID[selectedNetId].layers)) deselect();
+      applyNetLayer();
+      updateLearningPanel();
+      announce(netLayer === 'all' ? 'Showing all network layers.' : 'Showing ' + btn.textContent + ' layer.');
+    });
+  })();
+
+  function inNetLayer(layers){ return netLayer === 'all' || layers.indexOf(netLayer) !== -1; }
+
+  function applyNetLayer(){
+    Object.keys(netNodeEls).forEach(function(id){ netNodeEls[id].el.classList.toggle('dim', !inNetLayer(netNodeEls[id].layers)); });
+    Object.keys(netLabelEls).forEach(function(id){ netLabelEls[id].el.classList.toggle('dim', !inNetLayer(netLabelEls[id].layers)); });
+    netLinkEls.forEach(function(l){ l.el.classList.toggle('dim', !inNetLayer(l.layers)); });
+  }
+
+  function updateLearningPanel(){
+    var show = viewMode === 'network' && netLayer === 'learning' && document.getElementById('info-card').hidden;
+    document.getElementById('net-learning').hidden = !show;
+  }
+
+  function updateNetworkSelection(id){
+    selectedNetId = id;
+    Object.keys(netNodeEls).forEach(function(k){ netNodeEls[k].el.classList.toggle('selected', k === id); });
+    updateLearningPanel();
+  }
+
+  function selectNetworkNode(id){
+    var n = NET_BY_ID[id];
+    if (!n) return;
+    stopSpeaking();
+    selectedId = null;
+    document.getElementById('info-tag').innerHTML = n.tag;
+    document.getElementById('info-tag').style.background = hex(n.color) + '33';
+    document.getElementById('info-tag').style.color = hex(n.color);
+    document.getElementById('info-badge').textContent = 'Confirmed';
+    document.getElementById('info-badge').className = 'badge badge-confirmed';
+    document.getElementById('info-activity').innerHTML = 'Activity ' + n.activity + (n.illustrative ? ' &middot; illustrative location' : '');
+    document.getElementById('info-title').innerHTML = n.title;
+    document.getElementById('info-desc').innerHTML = n.desc;
+    setInfoLabels('Role', 'Connects to', 'Source');
+    document.getElementById('info-inputs').innerHTML = n.role;
+    document.getElementById('info-outputs').innerHTML = n.connects;
+    document.getElementById('info-beneficiaries').innerHTML = n.source;
+    document.getElementById('info-interior-btn').hidden = true;
+    renderInfoPhotos([]);
+    document.getElementById('info-card').hidden = false;
+    narrationText = plainText(n.title) + '. ' + plainText(n.desc) + ' Role: ' + plainText(n.role) + '. Connects to: ' + plainText(n.connects) + '.';
+    updateNetworkSelection(id);
+    announce(plainText(n.title) + ' selected.');
+  }
+
+  function setViewMode(mode){
+    if (mode === viewMode) return;
+    deselect();
+    viewMode = mode;
+    var is3d = mode === '3d', isDiagram = mode === 'diagram', isNet = mode === 'network';
+    renderer.domElement.style.display = is3d ? 'block' : 'none';
+    document.getElementById('compass').style.display = is3d ? '' : 'none';
+    diagramWrap.classList.toggle('active', isDiagram);
+    diagramWrap.setAttribute('aria-hidden', isDiagram ? 'false' : 'true');
+    networkWrap.classList.toggle('active', isNet);
+    networkWrap.setAttribute('aria-hidden', isNet ? 'false' : 'true');
+    document.body.classList.toggle('mode-network', isNet);
+    if (is3d) document.getElementById('hint').removeAttribute('hidden'); else document.getElementById('hint').setAttribute('hidden', '');
+    [['view-3d-btn', is3d], ['view-diagram-btn', isDiagram], ['view-network-btn', isNet]].forEach(function(p){
+      var b = document.getElementById(p[0]);
+      b.classList.toggle('active', p[1]);
+      b.setAttribute('aria-pressed', p[1] ? 'true' : 'false');
+    });
+    updateLearningPanel();
+    announce(is3d ? 'Switched to 3D view.' : (isDiagram ? 'Switched to simplified 2D loop diagram.' : 'Switched to the Grenada network map.'));
+  }
+
+  document.getElementById('view-3d-btn').addEventListener('click', function(){ setViewMode('3d'); });
+  document.getElementById('view-diagram-btn').addEventListener('click', function(){ setViewMode('diagram'); });
+  document.getElementById('view-network-btn').addEventListener('click', function(){ setViewMode('network'); });
+
+  /* ---------------- header buttons: drawers + reset ---------------- */
+  var statsBtn = document.getElementById('stats-btn');
+  var statsDrawer = document.getElementById('stats-drawer');
+  var flowsBtn = document.getElementById('flows-btn');
+  var flowsDrawer = document.getElementById('flows-drawer');
+
+  function toggleDrawer(btn, drawer, otherBtn, otherDrawer){
+    var isHidden = drawer.hasAttribute('hidden');
+    otherDrawer.setAttribute('hidden','');
+    otherBtn.classList.remove('active');
+    otherBtn.setAttribute('aria-pressed','false');
+    if (isHidden){
+      drawer.removeAttribute('hidden'); btn.classList.add('active'); btn.setAttribute('aria-pressed','true');
+    } else {
+      drawer.setAttribute('hidden',''); btn.classList.remove('active'); btn.setAttribute('aria-pressed','false');
+    }
+  }
+  statsBtn.addEventListener('click', function(){ toggleDrawer(statsBtn, statsDrawer, flowsBtn, flowsDrawer); });
+  flowsBtn.addEventListener('click', function(){ toggleDrawer(flowsBtn, flowsDrawer, statsBtn, statsDrawer); });
+
+  document.getElementById('method-toggle').addEventListener('click', function(){
+    var el = document.getElementById('method-detail');
+    el.hidden = !el.hidden;
+  });
+
+  document.getElementById('reset-btn').addEventListener('click', function(){
+    if (storyActive) exitStory();
+    if (interiorMode.active) exitInterior();
+    storyFlight = null;
+    camera.position.copy(DEFAULT_CAM_POS);
+    cameraTargetGoal.copy(DEFAULT_TARGET);
+    if (REDUCED_MOTION) controls.target.copy(DEFAULT_TARGET);
+    controls.update();
+    deselect();
+    activeCategory = null;
+    filterRow.querySelectorAll('.chip').forEach(function(c){
+      var isActive = c.dataset.cat === '';
+      c.classList.toggle('active', isActive);
+      c.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+    });
+    applyCategoryFilter();
+    announce('View reset.');
+  });
+
+  /* ---------------- guided story mode ---------------- */
+  var storyActive = false;
+  var storyPaused = false;
+  var storyIndex = 0;
+  var storyFlight = null;
+
+  function flyCameraTo(pos, target, duration){
+    if (REDUCED_MOTION){
+      camera.position.set(pos[0], pos[1], pos[2]);
+      cameraTargetGoal.set(target[0], target[1], target[2]);
+      controls.target.copy(cameraTargetGoal);
+      controls.update();
+      storyFlight = null;
+      return;
+    }
+    storyFlight = {
+      fromPos: camera.position.clone(), toPos: new THREE.Vector3(pos[0], pos[1], pos[2]),
+      fromTarget: controls.target.clone(), toTarget: new THREE.Vector3(target[0], target[1], target[2]),
+      start: clock.getElapsedTime(), duration: duration || 1.3
+    };
+  }
+
+  function updateLoopIsolation(loopIds){
+    LOOPS.forEach(function(loop){
+      var visible = !loopIds || loopIds.indexOf(loop.id) !== -1;
+      setLoopVisible(loop.id, visible);
+      var cb = document.querySelector('input[data-loop="' + loop.id + '"]');
+      if (cb) cb.checked = visible;
+    });
+  }
+
+  function buildStoryDots(){
+    var wrap = document.getElementById('story-progress');
+    wrap.innerHTML = '';
+    STORY_STEPS.forEach(function(){
+      var dot = document.createElement('span');
+      dot.className = 'story-dot';
+      wrap.appendChild(dot);
+    });
+  }
+
+  function renderStoryUI(){
+    var step = STORY_STEPS[storyIndex];
+    document.getElementById('story-step-num').textContent = String(storyIndex + 1);
+    document.getElementById('story-step-total').textContent = String(STORY_STEPS.length);
+    document.getElementById('story-step-title').textContent = step.title;
+    document.getElementById('story-step-text').textContent = step.text;
+    document.getElementById('story-back').disabled = storyIndex === 0;
+    document.getElementById('story-next').textContent = storyIndex === STORY_STEPS.length - 1 ? 'Finish' : 'Next';
+    document.querySelectorAll('.story-dot').forEach(function(dot, idx){
+      dot.classList.toggle('current', idx === storyIndex);
+      dot.classList.toggle('done', idx < storyIndex);
+    });
+    document.getElementById('story-paused-note').hidden = !storyPaused;
+    document.getElementById('story-nav-row').hidden = storyPaused;
+    document.getElementById('story-resume-row').hidden = !storyPaused;
+  }
+
+  function goToStoryStep(i){
+    storyIndex = Math.max(0, Math.min(STORY_STEPS.length - 1, i));
+    var step = STORY_STEPS[storyIndex];
+    flyCameraTo(step.camPos, step.camTarget, 1.3);
+    updateLoopIsolation(step.isolate);
+    if (step.focus){
+      var pos = POS[step.focus];
+      var meta = metaFor(step.focus);
+      glow.position.set(pos.x, 0.03, pos.z);
+      glow.material.color.setHex(meta.dot);
+      glowTargetOpacity = 0.5;
+    } else {
+      glowTargetOpacity = 0;
+    }
+    renderStoryUI();
+    announce('Story step ' + (storyIndex + 1) + ' of ' + STORY_STEPS.length + ': ' + step.title + '. ' + step.text);
+  }
+
+  function startStory(){
+    if (interiorMode.active) exitInterior();
+    setViewMode('3d');
+    storyActive = true;
+    storyPaused = false;
+    document.getElementById('story-bar').hidden = false;
+    document.getElementById('story-btn').classList.add('active');
+    document.getElementById('story-btn').setAttribute('aria-pressed','true');
+    document.getElementById('info-card').hidden = true;
+    document.getElementById('hint').setAttribute('hidden','');
+    document.querySelectorAll('.legend-item').forEach(function(el){ el.classList.remove('selected'); });
+    buildStoryDots();
+    goToStoryStep(0);
+  }
+
+  function exitStory(){
+    storyActive = false;
+    storyPaused = false;
+    storyFlight = null;
+    document.getElementById('story-bar').hidden = true;
+    document.getElementById('story-btn').classList.remove('active');
+    document.getElementById('story-btn').setAttribute('aria-pressed','false');
+    updateLoopIsolation(null);
+    glowTargetOpacity = 0;
+    announce('Story exited.');
+  }
+
+  document.getElementById('story-btn').addEventListener('click', function(){
+    if (storyActive) exitStory(); else startStory();
+  });
+  document.getElementById('story-back').addEventListener('click', function(){
+    if (storyIndex > 0) goToStoryStep(storyIndex - 1);
+  });
+  document.getElementById('story-next').addEventListener('click', function(){
+    if (storyIndex < STORY_STEPS.length - 1) goToStoryStep(storyIndex + 1); else exitStory();
+  });
+  document.getElementById('story-exit').addEventListener('click', exitStory);
+  document.getElementById('story-exit-2').addEventListener('click', exitStory);
+  document.getElementById('story-resume').addEventListener('click', function(){
+    storyPaused = false;
+    goToStoryStep(storyIndex);
+  });
+
+  /* ---------------- interior cutaway mode ---------------- */
+  var interiorMode = { active:false, hotspotId:null, savedPos:null, savedTarget:null };
+
+  function enterInterior(id){
+    if (storyActive) exitStory();
+    if (interiorMode.active) exitInterior();
+    var meta = metaFor(id);
+    var data = INTERIORS[id];
+    var group = hotspots[id];
+    if (!meta || !data || !group || !group.userData.interiorGroup) return;
+    setViewMode('3d');
+
+    interiorMode.active = true;
+    interiorMode.hotspotId = id;
+    interiorMode.savedPos = camera.position.clone();
+    interiorMode.savedTarget = controls.target.clone();
+
+    group.userData.exteriorHideParts.forEach(function(p){ p.visible = false; });
+    group.userData.interiorGroup.visible = true;
+
+    var pos = POS[id];
+    flyCameraTo([pos.x+0.9, 7.2, pos.z+0.9], [pos.x, 0.2, pos.z], 1.2);
+
+    document.getElementById('info-card').hidden = true;
+    document.getElementById('interior-title').innerHTML = meta.title;
+    document.getElementById('interior-note').textContent = data.note;
+    var list = document.getElementById('interior-zone-list');
+    list.innerHTML = '';
+    data.zones.forEach(function(zone){
+      var row = document.createElement('div');
+      row.className = 'zone-row';
+      row.innerHTML =
+        '<span class="zone-swatch" style="background:' + hex(zone.color) + '"></span>' +
+        '<span class="zone-text"><b>' + zone.label + '</b><span>' + zone.desc + '</span></span>';
+      list.appendChild(row);
+    });
+    document.getElementById('interior-bar').hidden = false;
+    glowTargetOpacity = 0;
+    announce('Viewing the interior of ' + plainText(meta.title) + '. ' + data.zones.length + ' zones shown. This is an illustrative layout, not a technical drawing.');
+  }
+
+  function exitInterior(){
+    if (!interiorMode.active) return;
+    var group = hotspots[interiorMode.hotspotId];
+    if (group && group.userData.exteriorHideParts){
+      group.userData.exteriorHideParts.forEach(function(p){ p.visible = true; });
+      group.userData.interiorGroup.visible = false;
+    }
+    document.getElementById('interior-bar').hidden = true;
+    if (interiorMode.savedPos && interiorMode.savedTarget){
+      flyCameraTo(interiorMode.savedPos.toArray(), interiorMode.savedTarget.toArray(), 1.0);
+    }
+    interiorMode.active = false;
+    interiorMode.hotspotId = null;
+    announce('Exited interior view.');
+  }
+
+  document.getElementById('info-interior-btn').addEventListener('click', function(){
+    if (selectedId) enterInterior(selectedId);
+  });
+  document.getElementById('interior-exit').addEventListener('click', exitInterior);
+
+  /* ---------------- pointer / raycast interaction ---------------- */
+  var raycaster = new THREE.Raycaster();
+  var pointerNDC = new THREE.Vector2();
+  var downPos = null;
+
+  function setPointerFromEvent(ev){
+    var rect = renderer.domElement.getBoundingClientRect();
+    var x = (ev.clientX !== undefined ? ev.clientX : (ev.touches && ev.touches[0].clientX));
+    var y = (ev.clientY !== undefined ? ev.clientY : (ev.touches && ev.touches[0].clientY));
+    pointerNDC.x = ((x - rect.left) / rect.width) * 2 - 1;
+    pointerNDC.y = -((y - rect.top) / rect.height) * 2 + 1;
+  }
+
+  renderer.domElement.addEventListener('pointerdown', function(ev){
+    downPos = { x: ev.clientX, y: ev.clientY };
+    if (storyActive && !storyPaused){
+      storyPaused = true;
+      storyFlight = null;
+      renderStoryUI();
+      announce('Story paused. Drag to look around, then resume.');
+    }
+  });
+
+  renderer.domElement.addEventListener('pointerup', function(ev){
+    if (!downPos) return;
+    var dx = ev.clientX - downPos.x, dy = ev.clientY - downPos.y;
+    downPos = null;
+    if (Math.sqrt(dx*dx + dy*dy) > 6) return; // was a drag, not a tap
+
+    setPointerFromEvent(ev);
+    raycaster.setFromCamera(pointerNDC, camera);
+    var meshes = [];
+    Object.keys(hotspots).forEach(function(id){
+      if (hotspots[id].visible === false) return;
+      hotspots[id].traverse(function(o){ if (o.isMesh) meshes.push(o); });
+    });
+    var hits = raycaster.intersectObjects(meshes, false);
+    if (hits.length){
+      var obj = hits[0].object;
+      while (obj && !obj.userData.hotspotId) obj = obj.parent;
+      if (obj) selectHotspot(obj.userData.hotspotId);
+    }
+  });
+
+  /* ---------------- resize ---------------- */
+  function resize(){
+    var w = wrap.clientWidth, h = wrap.clientHeight;
+    if (!w || !h) return;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+  }
+  if (window.ResizeObserver){
+    new ResizeObserver(resize).observe(wrap);
+  } else {
+    window.addEventListener('resize', resize);
+  }
+  resize();
+
+  /* ---------------- animation loop ---------------- */
+  var clock = new THREE.Clock();
+  var compassArrow = document.getElementById('compass-arrow');
+
+  function animate(){
+    requestAnimationFrame(animate);
+    var t = clock.getElapsedTime();
+
+    flowItems.forEach(function(fp){
+      if (!fp.mesh.visible) return;
+      var tt = ((t * fp.speed) + fp.offset) % 1;
+      fp.mesh.position.copy(fp.curve.getPointAt(tt));
+    });
+
+    var flyHotspot = hotspots.bsf;
+    if (flyHotspot && flyHotspot.userData.flies){
+      flyHotspot.userData.flies.rotation.y = t * 0.6;
+      flyHotspot.userData.flies.position.y = Math.sin(t*3) * 0.04;
+    }
+
+    var trainHotspot = hotspots.training;
+    if (trainHotspot && trainHotspot.userData.globe && !REDUCED_MOTION){
+      trainHotspot.userData.globe.rotation.y = t * 0.4;
+    }
+
+    if (!REDUCED_MOTION){
+      poultryFlock.forEach(function(ch){
+        ch.mesh.position.y = Math.max(0, Math.sin(t*2 + ch.phase)) * 0.02;
+        ch.mesh.rotation.y += Math.sin(t*0.6 + ch.phase) * 0.0025;
+      });
+    }
+
+    glow.material.opacity += (glowTargetOpacity - glow.material.opacity) * 0.12;
+    if (!REDUCED_MOTION) glow.scale.setScalar(1 + Math.sin(t*2.4) * 0.04);
+
+    if (storyFlight){
+      var elapsed = t - storyFlight.start;
+      var p = Math.min(1, elapsed / storyFlight.duration);
+      var eased = p < 0.5 ? 2*p*p : -1 + (4 - 2*p)*p;
+      camera.position.lerpVectors(storyFlight.fromPos, storyFlight.toPos, eased);
+      cameraTargetGoal.lerpVectors(storyFlight.fromTarget, storyFlight.toTarget, eased);
+      controls.target.copy(cameraTargetGoal);
+      if (p >= 1) storyFlight = null;
+    } else if (!REDUCED_MOTION){
+      controls.target.lerp(cameraTargetGoal, 0.08);
+    }
+
+    controls.update();
+
+    var az = Math.atan2(camera.position.x - controls.target.x, camera.position.z - controls.target.z);
+    compassArrow.style.transform = 'rotate(' + (-az * 180 / Math.PI) + 'deg)';
+
+    renderer.render(scene, camera);
+  }
+  animate();
+
+})();
+</script>

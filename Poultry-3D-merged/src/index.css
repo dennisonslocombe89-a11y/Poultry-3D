@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 24s linear infinite;
+}
+
+@keyframes network-flow {
+  to { stroke-dashoffset: -24; }
+}
+
+@keyframes network-pulse {
+  0%, 100% { opacity: .65; transform: scale(.85); transform-origin: center; }
+  50% { opacity: 1; transform: scale(1.25); transform-origin: center; }
+}
+
+.network-path { animation: network-flow 4s linear infinite; }
+.network-delay-1 { animation-delay: -.8s; }
+.network-delay-2 { animation-delay: -1.6s; }
+.network-delay-3 { animation-delay: -2.4s; }
+.network-pulse { animation: network-pulse 2.4s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .network-path, .network-pulse, .animate-spin-slow { animation: none; }
+}
+
+/* Custom sleek scrollbar for panels */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0c1e17;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2a4636;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #4fa697;
+}
