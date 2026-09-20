@@ -11,17 +11,8 @@ interface GrenadaNetworkProps {
 
 type Pt = { x: number; y: number };
 
-const smoothClosed = (pts: Pt[]) => {
-  const n = pts.length;
-  const mid = (a: Pt, b: Pt) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
-  const start = mid(pts[n - 1], pts[0]);
-  let d = `M ${start.x} ${start.y}`;
-  for (let i = 0; i < n; i++) {
-    const m = mid(pts[i], pts[(i + 1) % n]);
-    d += ` Q ${pts[i].x} ${pts[i].y} ${m.x} ${m.y}`;
-  }
-  return d + ' Z';
-};
+const coastlinePath = (pts: Pt[]) =>
+  `${pts.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ')} Z`;
 
 const LINK_STYLE = {
   value: { stroke: '#a9d58a', dash: '7 7' },
@@ -98,7 +89,7 @@ export const GrenadaNetwork: React.FC<GrenadaNetworkProps> = ({ onSelectHotspot 
               const lp = netProj(isl.label);
               return (
                 <g key={isl.name}>
-                  <path d={smoothClosed(isl.pts.map(netProj))} fill="#2f5b3a" stroke="#8fc5a0" strokeWidth={2} strokeOpacity={0.55} strokeLinejoin="round" />
+                  <path d={coastlinePath(isl.pts.map(netProj))} fill="#2f5b3a" stroke="#8fc5a0" strokeWidth={2} strokeOpacity={0.72} strokeLinejoin="round" />
                   <text x={lp.x} y={lp.y} fill="#f1ecda" fillOpacity={0.4} fontSize={isl.big ? 20 : 13} fontWeight={700} letterSpacing="0.16em" textAnchor={isl.anchor}>{isl.name}</text>
                 </g>
               );
@@ -177,7 +168,7 @@ export const GrenadaNetwork: React.FC<GrenadaNetworkProps> = ({ onSelectHotspot 
               );
             })}
 
-            <g transform="translate(612,318)">
+            <g transform="translate(612,442)">
               <rect x={-14} y={-22} width={240} height={218} rx={10} fill="#08181d" fillOpacity={0.6} />
               {[
                 ['coop', 'Cooperative (3)'], ['farm', 'Demonstration farm (10)'], ['school', 'School installation (5)'],
@@ -202,7 +193,7 @@ export const GrenadaNetwork: React.FC<GrenadaNetworkProps> = ({ onSelectHotspot 
             </g>
           </svg>
 
-          <p className="pointer-events-none absolute bottom-3 right-3 max-w-[330px] rounded-xl bg-[#08181d]/75 px-3 py-2 font-mono text-[10px] leading-snug text-[#c9c3ab]">
+          <p className="pointer-events-none absolute left-3 top-3 max-w-[330px] rounded-xl bg-[#08181d]/75 px-3 py-2 font-mono text-[10px] leading-snug text-[#c9c3ab]">
             Schematic map, not to scale · solid ring = named in the contract · dashed ring = illustrative location, to be confirmed by GCLL
           </p>
 
