@@ -28,6 +28,10 @@
 .network-delay-3 { animation-delay: -2.4s; }
 .network-pulse { animation: network-pulse 2.4s ease-in-out infinite; }
 
+@media (prefers-reduced-motion: reduce) {
+  .network-path, .network-pulse, .animate-spin-slow { animation: none; }
+}
+
 /* Custom sleek scrollbar for panels */
 ::-webkit-scrollbar {
   width: 6px;

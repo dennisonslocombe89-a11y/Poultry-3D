@@ -63,7 +63,7 @@ export default function App() {
       {/* Top Navigation & App Header */}
       <Header
         viewMode={viewMode}
-        onToggleViewMode={(mode) => setViewMode(mode)}
+        onToggleViewMode={(mode) => { setViewMode(mode); if (mode === 'network') setSelectedId(null); }}
         onStartWalkthrough={handleStartTour}
         onOpenFacts={() => setIsFactsModalOpen(true)}
         isTourMode={isTourMode}
@@ -85,7 +85,7 @@ export default function App() {
               onSelectHotspot={handleSelectHotspot}
             />
           ) : (
-            <GrenadaNetwork onSelectHotspot={handleSelectHotspot} />
+            <GrenadaNetwork onSelectHotspot={(id) => { setViewMode('3d'); handleSelectHotspot(id); }} />
           )}
 
           {/* Floating Guided Tour Bar */}

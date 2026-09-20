@@ -174,6 +174,7 @@ export const ElementDrawer: React.FC<ElementDrawerProps> = ({
         {activeTab === 'overview' && (
           <div className="space-y-4 animate-in fade-in duration-200">
             {/* Real Photos Pop-Up Grid */}
+            {element.images.length > 0 && (
             <div>
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-mono uppercase tracking-wider text-[#e3a93a] flex items-center gap-1.5">
@@ -205,6 +206,7 @@ export const ElementDrawer: React.FC<ElementDrawerProps> = ({
                 ))}
               </div>
             </div>
+            )}
 
             {/* Description */}
             <div className="bg-[#0c1e17]/70 rounded-xl p-3.5 border border-[#2a4636]/70">

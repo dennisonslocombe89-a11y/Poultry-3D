@@ -39,3 +39,15 @@ The supplied draft included unsupported exact specifications, fixed site allocat
 
 These can remain in the visual model as clearly marked concepts, but require project and technical approval before being represented as commitments.
 
+
+## Contract re-check (September 2026)
+
+The statements above about Black Soldier Fly, cassava and the farm/school split were re-checked against the text of the signed contract (Annex I, Description of the Action). The contract text says:
+
+- **Installations:** "Ten (10) installations will be established at farms operated by members of the participating cooperatives" and "Five (5) installations will be established at selected secondary schools with existing poultry programmes" (Activity A1, p. 26; repeated on pp. 28 and 31). The 10 + 5 split is therefore stated, although the individual schools and farms are not named.
+- **Black Soldier Fly:** "Black Soldier Fly (BSF) production units for sustainable poultry feed" are listed among the demonstration systems (p. 26) and BSF production is a training topic (pp. 30–31). Not every site receives identical equipment (p. 28).
+- **Cassava:** "Cassava-based feed demonstration systems (where appropriate)" are listed (p. 26) and taught as an alternative feed system (p. 31). Cassava is not stated as the only crop or as required at every site.
+- **Study tour:** one international study visit to Cooperativa de Servicios Múltiples Juan XXIII, R.L., Santiago de Veraguas, Panama (pp. 32–33), within 66 planned learning events (10 trainings, 1 study visit, 10 coaching visits, 45 demonstration sessions; indicator 1.3.2, p. 20). The text gives the delegation as six participants and also lists eight — to be clarified.
+- **Regional partners:** Saint Lucia and Saint Kitts and Nevis take part through knowledge exchange only (p. 27).
+
+Consequently this version marks BSF, cassava feed demonstrations and the 10 + 5 installation split as **confirmed (contract pp. 26–31)**, while keeping every dimension, capacity, location, yield and equipment detail as illustrative. Rainwater harvesting remains *proposed* (it appears only as a resilience practice). Please verify these page references against the signed PDF; if GCLL's project team reads the contract differently, revert the affected entries in `src/data/poultryData.ts` and `src/data/networkData.ts`.

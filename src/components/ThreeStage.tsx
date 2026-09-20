@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { HOTSPOTS_DATA, FLOW_CONNECTIONS, THEME_COLORS } from '../data/poultryData';
 import { HotspotData } from '../types';
+import { buildEnvironment, buildPoultryHouse, buildBiogas, buildSchool, buildTrainingHub, FlockMember } from './sceneKit';
 
 interface ThreeStageProps {
   selectedId: string | null;
@@ -30,7 +31,7 @@ export const ThreeStage: React.FC<ThreeStageProps> = ({
     // --- Scene & Fog ---
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0xcdeaf0);
-    scene.fog = new THREE.Fog(0xdbeedd, 24, 64);
+    scene.fog = new THREE.Fog(0xcfe6d6, 48, 135);
 
     // --- Camera ---
     const camera = new THREE.PerspectiveCamera(
@@ -52,7 +53,7 @@ export const ThreeStage: React.FC<ThreeStageProps> = ({
     renderer.setSize(container.clientWidth, container.clientHeight);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.08;
+    renderer.toneMappingExposure = 1.5;
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     container.appendChild(renderer.domElement);
@@ -85,67 +86,14 @@ export const ThreeStage: React.FC<ThreeStageProps> = ({
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.35);
     scene.add(ambientLight);
 
-    // --- Ground Disc ---
-    const groundGeo = new THREE.CircleGeometry(42, 64);
-    const groundMat = new THREE.MeshStandardMaterial({
-      color: 0x6f9450,
-      roughness: 0.95,
-      metalness: 0.05
-    });
-    const ground = new THREE.Mesh(groundGeo, groundMat);
-    ground.rotation.x = -Math.PI / 2;
-    ground.receiveShadow = true;
-    scene.add(ground);
-
-    // A clean concrete service apron visually anchors the central farm complex.
-    const apron = new THREE.Mesh(
-      new THREE.CircleGeometry(8.7, 64),
-      new THREE.MeshStandardMaterial({ color: 0x8da66f, roughness: 1 })
-    );
-    apron.rotation.x = -Math.PI / 2;
-    apron.position.y = 0.012;
-    apron.receiveShadow = true;
-    scene.add(apron);
-
-    // --- Pathway to Market & Trail to School ---
+    // --- Island environment: sea, grass, beach, tracks, fields, hills and planting ---
     const posMap: Record<string, { x: number; y: number; z: number }> = {};
     HOTSPOTS_DATA.forEach((h) => {
       posMap[h.id] = h.position3D;
     });
-
-    // Market Road
-    const poultryPos = posMap['poultry'];
-    const marketPos = posMap['market'];
-    const roadDx = marketPos.x - poultryPos.x;
-    const roadDz = marketPos.z - poultryPos.z;
-    const roadLen = Math.sqrt(roadDx * roadDx + roadDz * roadDz);
-    const roadMesh = new THREE.Mesh(
-      new THREE.PlaneGeometry(roadLen, 1.2),
-      new THREE.MeshBasicMaterial({ color: 0xcbb27a, transparent: true, opacity: 0.85 })
-    );
-    roadMesh.rotation.x = -Math.PI / 2;
-    roadMesh.rotation.z = -Math.atan2(roadDz, roadDx);
-    roadMesh.position.set((poultryPos.x + marketPos.x) / 2, 0.02, (poultryPos.z + marketPos.z) / 2);
-    scene.add(roadMesh);
-
-    // School Dotted Stepping Stones
-    const schoolPos = posMap['school'];
-    const stepsCount = 14;
-    for (let i = 2; i < stepsCount - 1; i++) {
-      if (i % 2 !== 0) continue;
-      const t = i / stepsCount;
-      const dot = new THREE.Mesh(
-        new THREE.CircleGeometry(0.22, 12),
-        new THREE.MeshBasicMaterial({ color: 0xe3a93a, transparent: true, opacity: 0.75 })
-      );
-      dot.rotation.x = -Math.PI / 2;
-      dot.position.set(
-        poultryPos.x + (schoolPos.x - poultryPos.x) * t,
-        0.03,
-        poultryPos.z + (schoolPos.z - poultryPos.z) * t
-      );
-      scene.add(dot);
-    }
+    buildEnvironment(scene, posMap);
+    const poultryFlock: FlockMember[] = [];
+    let trainingGlobe: THREE.Object3D | null = null;
 
     // --- Hotspots Building Objects ---
     const hotspotGroups: Record<string, THREE.Group> = {};
@@ -179,45 +127,6 @@ export const ThreeStage: React.FC<ThreeStageProps> = ({
       return mesh;
     };
 
-    const addGableRoof = (group: THREE.Group, width: number, depth: number, y: number, color: number) => {
-      const roofMat = new THREE.MeshStandardMaterial({ color, roughness: 0.56, metalness: 0.12 });
-      [-1, 1].forEach((side) => {
-        const panel = new THREE.Mesh(new THREE.BoxGeometry(width * 0.58, 0.12, depth + 0.34), roofMat);
-        panel.rotation.z = side * 0.48;
-        panel.position.set(side * width * 0.22, y, 0);
-        panel.castShadow = true;
-        group.add(panel);
-      });
-      const ridge = createCyl(0.055, 0.055, depth + 0.42, 0x4d3327, 8);
-      ridge.rotation.x = Math.PI / 2;
-      ridge.position.y = y + width * 0.23;
-      group.add(ridge);
-    };
-
-    const addDoor = (group: THREE.Group, x: number, y: number, z: number, color = 0x405845) => {
-      const door = createBox(0.62, 1.12, 0.08, color, 0.55);
-      door.position.set(x, y, z);
-      group.add(door);
-      const handle = new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 8), new THREE.MeshStandardMaterial({ color: 0xe3a93a, metalness: 0.6 }));
-      handle.position.set(x + 0.2, y, z + 0.065);
-      group.add(handle);
-    };
-
-    const addWindow = (group: THREE.Group, x: number, y: number, z: number, w = 0.62) => {
-      const frame = createBox(w + 0.1, 0.58, 0.07, 0xf1ecda);
-      frame.position.set(x, y, z);
-      group.add(frame);
-      const glass = createBox(w, 0.48, 0.085, 0x78b8c7, 0.22);
-      glass.position.set(x, y, z + 0.015);
-      gAddMuntins(group, x, y, z + 0.07, w);
-      group.add(glass);
-    };
-
-    const gAddMuntins = (group: THREE.Group, x: number, y: number, z: number, w: number) => {
-      const v = createBox(0.035, 0.5, 0.03, 0xe7e0cd); v.position.set(x, y, z); group.add(v);
-      const h = createBox(w, 0.035, 0.03, 0xe7e0cd); h.position.set(x, y, z); group.add(h);
-    };
-
     const registerGroup = (id: string, group: THREE.Group) => {
       group.userData.hotspotId = id;
       const p = posMap[id];
@@ -228,57 +137,10 @@ export const ThreeStage: React.FC<ThreeStageProps> = ({
     };
 
     // 1. Poultry House
-    {
-      const g = new THREE.Group();
-      const slab = createBox(4.8, 0.16, 3.15, 0xb8b7a9); slab.position.y = 0.08; g.add(slab);
-      const body = createBox(4.45, 1.72, 2.85, 0xe3d7b7);
-      body.position.y = 0.95;
-      g.add(body);
-      addGableRoof(g, 4.75, 3.05, 1.94, 0x804b35);
-      addDoor(g, 0, 0.73, 1.47, 0x496249);
-      [-1.45, 1.45].forEach((x) => addWindow(g, x, 1.15, 1.47, 0.72));
-      // Raised ventilation openings and a defined fenced run.
-      for (let x = -1.75; x <= 1.75; x += 0.7) {
-        const vent = createBox(0.42, 0.18, 0.06, 0x315b58); vent.position.set(x, 1.58, -1.445); g.add(vent);
-      }
-      const fenceMat = new THREE.MeshStandardMaterial({ color: 0x8d8066, roughness: 0.9 });
-      for (let x = -2.55; x <= 2.55; x += 0.65) {
-        const post = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.88, 0.045), fenceMat); post.position.set(x, 0.44, 2.65); g.add(post);
-      }
-      const rail = createBox(5.2, 0.045, 0.045, 0x8d8066); rail.position.set(0, 0.78, 2.65); g.add(rail);
-      // Simple birds make the purpose readable without pretending to be a detailed site plan.
-      [-1.25, 0, 1.15].forEach((x, i) => {
-        const bird = new THREE.Mesh(new THREE.SphereGeometry(0.18, 12, 8), new THREE.MeshStandardMaterial({ color: i === 1 ? 0xb95d36 : 0xf0e4cc, roughness: 1 }));
-        bird.scale.set(1.25, 0.85, 0.8); bird.position.set(x, 0.24, 2.05 + (i % 2) * 0.25); bird.castShadow = true; g.add(bird);
-      });
-      registerGroup('poultry', g);
-    }
+    registerGroup('poultry', buildPoultryHouse(poultryFlock));
 
     // 2. Biogas Digester
-    {
-      const g = new THREE.Group();
-      const base = createCyl(1.5, 1.62, 0.3, 0xb9b6a6, 32); base.position.y = 0.15; g.add(base);
-      const tank = createCyl(1.22, 1.28, 1.55, 0x315b46, 32, 0.42);
-      tank.position.y = 0.95;
-      g.add(tank);
-
-      const dome = new THREE.Mesh(
-        new THREE.SphereGeometry(1.22, 32, 18, 0, Math.PI * 2, 0, Math.PI / 2),
-        new THREE.MeshStandardMaterial({ color: 0x244c3a, roughness: 0.38, metalness: 0.08 })
-      );
-      dome.position.y = 1.72;
-      dome.castShadow = true;
-      g.add(dome);
-
-      const pipe = createCyl(0.09, 0.09, 1.85, 0xb4b8af, 12, 0.3);
-      pipe.rotation.z = Math.PI / 2.2;
-      pipe.position.set(1.05, 1.72, 0);
-      g.add(pipe);
-      const inlet = createBox(0.85, 0.48, 0.72, 0xb6ad91); inlet.position.set(-1.58, 0.3, 0); g.add(inlet);
-      const outlet = createBox(0.72, 0.34, 0.62, 0x9b9278); outlet.position.set(1.52, 0.23, 0); g.add(outlet);
-      [0.52, 1.05, 1.55].forEach((y) => { const band = createCyl(1.235, 1.235, 0.035, 0x86a896, 32, 0.35); band.position.y = y; g.add(band); });
-      registerGroup('biogas', g);
-    }
+    registerGroup('biogas', buildBiogas());
 
     // 3. Composting Bay
     {
@@ -440,32 +302,14 @@ export const ThreeStage: React.FC<ThreeStageProps> = ({
       registerGroup('market', g);
     }
 
-    // 10. School Demonstration Site
+    // 10. Secondary School Demonstration Site
+    registerGroup('school', buildSchool(poultryFlock));
+
+    // 11. Training & Learning Hub
     {
-      const g = new THREE.Group();
-      const slab = createBox(3.4, 0.14, 2.5, 0xb9b6a6); slab.position.y = 0.07; g.add(slab);
-      const body = createBox(3.1, 1.75, 2.2, 0xf0e3bd);
-      body.position.y = 0.95;
-      g.add(body);
-      addGableRoof(g, 3.35, 2.4, 1.92, 0x397c91);
-      addDoor(g, 0, 0.75, 1.14, 0x315b58);
-      [-1.02, 1.02].forEach((x) => addWindow(g, x, 1.18, 1.14, 0.62));
-      const step1 = createBox(1.12, 0.12, 0.46, 0xaaa694); step1.position.set(0, 0.06, 1.42); g.add(step1);
-      const sign = createBox(1.85, 0.38, 0.08, 0x173d33); sign.position.set(0, 1.68, 1.14); g.add(sign);
-
-      const pole = createCyl(0.035, 0.035, 1.7, 0x9c9c9c, 6);
-      pole.position.set(1.5, 0.85, -1.1);
-      g.add(pole);
-
-      const flag = createBox(0.45, 0.3, 0.02, 0xe3a93a);
-      flag.position.set(1.72, 1.55, -1.1);
-      g.add(flag);
-      // Outdoor training circle: benches around a demonstration point.
-      [-1, 0, 1].forEach((i) => {
-        const bench = createBox(0.72, 0.13, 0.24, 0x8c633f); bench.position.set(i * 0.9, 0.3, 2.25); g.add(bench);
-        const legs = createBox(0.48, 0.25, 0.12, 0x5f4a35); legs.position.set(i * 0.9, 0.15, 2.25); g.add(legs);
-      });
-      registerGroup('school', g);
+      const hub = buildTrainingHub();
+      trainingGlobe = hub.userData.globe as THREE.Object3D;
+      registerGroup('training', hub);
     }
 
     // --- Circular Flow Tubes & Animated Moving Particles ---
@@ -605,6 +449,12 @@ export const ThreeStage: React.FC<ThreeStageProps> = ({
       particleFlows.forEach((fp) => {
         const tt = (t * fp.speed + fp.offset) % 1;
         fp.mesh.position.copy(fp.curve.getPointAt(tt));
+      });
+
+      if (trainingGlobe) trainingGlobe.rotation.y = t * 0.4;
+      poultryFlock.forEach((ch) => {
+        ch.mesh.position.y = Math.max(0, Math.sin(t * 2 + ch.phase)) * 0.02;
+        ch.mesh.rotation.y += Math.sin(t * 0.6 + ch.phase) * 0.0025;
       });
 
       // Animate BSF flies
